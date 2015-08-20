@@ -7,15 +7,16 @@
 ##############################################################################
 
 import http.client
+#import ssl
 
-payload = "clbin=singsong"
-
+url = "https://clbin.com"
+payload = "clbin=boo1"
 
 def posts():
+    '''plugin for clbin'''
     conn = http.client.HTTPConnection("https://clbin.com/")
     conn.request("POST", "/", payload)
     resp = conn.getresponse()
     print(resp.status, resp.reason)
     print(resp.read())
 
-clbin()

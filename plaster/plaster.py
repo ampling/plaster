@@ -7,11 +7,13 @@
 ##############################################################################
 """ Plaster
 
-Plaster is a friendly command-line pastebin client.
+Plaster is a configurable command-line pastebin client.
 """
 
 import fileinput
+from plugins import sprunge
 
-for line in fileinput.input():
-    print(line)
+#for line in fileinput.input():
+#    print(line)
 
+sprunge.posts()

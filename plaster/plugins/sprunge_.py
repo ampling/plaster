@@ -8,14 +8,13 @@
 
 import requests
 
-url = 'http://sprunge.com'
-payload = "clbin=zzzzzzzzk"
+
+url = "http://sprunge.us"
+payload = "sprunge=boo7"
 
 def posts():
+    '''alt plugin for sprunge'''
     r = requests.post(url, data=payload)
     print(r.status_code, r.reason)
     #print(r.text)
     print(r.headers)
-posts()
-
-

@@ -7,15 +7,15 @@
 ##############################################################################
 
 import requests
+#import ssl
 
-url = 'http://sprunge.com'
-payload = "clbin=zzzzzzzzk"
+url = "https://clbin.com"
+payload = "clbin=boo2"
 
 def posts():
+    '''alt plugin for clbin'''
     r = requests.post(url, data=payload)
     print(r.status_code, r.reason)
     #print(r.text)
     print(r.headers)
-posts()
-
 

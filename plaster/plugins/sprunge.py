@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-i##############################################################################
+##############################################################################
 #
 # Copycenter (c) [2015-08-06], ISC, [Ampling]
 #
@@ -8,13 +8,14 @@ i##############################################################################
 
 import http.client
 
-payload = "sprunge=sing"
 
+url = "http://sprunge.us"
+payload = "sprunge=boo6"
 
 def posts():
-    conn = http.client.HTTPConnection("sprunge.us")
+    '''plugin for sprunge'''
+    conn = http.client.HTTPConnection(url)
     conn.request("POST", "/", payload)
     resp = conn.getresponse()
     print(resp.status, resp.reason)
     print(resp.read())
-
