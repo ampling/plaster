@@ -17,5 +17,5 @@ def posts():
     conn = http.client.HTTPConnection(url)
     conn.request("POST", "/", payload)
     resp = conn.getresponse()
-    print(resp.status, resp.reason)
     print(resp.read())
+    #print(r.status_code, r.reason)
