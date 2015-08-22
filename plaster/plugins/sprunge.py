@@ -10,12 +10,11 @@ import http.client
 
 
 url = "http://sprunge.us"
-payload = "sprunge=boo6"
 
-def posts():
+def posts(payload):
     '''plugin for sprunge'''
-    conn = http.client.HTTPConnection(url)
-    conn.request("POST", "/", payload)
+    conn = http.client.HTTPConnection("http://sprunge.us")
+    conn.request("POST", "/", data="sprunge=" + payload)
     resp = conn.getresponse()
     print(resp.read())
     #print(r.status_code, r.reason)

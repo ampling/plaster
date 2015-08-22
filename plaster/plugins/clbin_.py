@@ -10,11 +10,10 @@ import requests
 
 
 url = "https://clbin.com"
-payload = "clbin=boo2"
 
-def posts():
+def posts(payload):
     '''alt plugin for clbin'''
-    r = requests.post(url, data=payload)
+    r = requests.post(url, data="clbin=" + payload)
     print(r.status_code, r.reason)
     print(r.text)
     #print(r.headers)

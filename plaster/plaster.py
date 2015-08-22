@@ -10,14 +10,15 @@
 Plaster is a configurable command-line pastebin client.
 """
 
+from plugins import sprunge_
 import fileinput
-from plugins import sprunge
-#from plugins import sprunge_
-#from plugins import ptpb_
+import configparser
 
-#for line in fileinput.input():
-#    print(line)
+config = configparser.ConfigParser()
+config.sections()
+config.read('plaster.conf')
+list = config.sections()
+pb = list[0]
 
-sprunge.posts()
-#sprunge_.posts()
-#ptpb_.posts()
+for payload in fileinput.input():
+    sprunge_.posts(payload)

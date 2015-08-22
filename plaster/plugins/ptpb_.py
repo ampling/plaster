@@ -10,11 +10,10 @@ import requests
 
 
 url = "https://ptpb.pw"
-payload = "ptpb=boo5"
 
 def posts():
     '''alt plugin for ptpb'''
-    r = requests.post(url, data=payload)
+    r = requests.post(url, data="ptpb" + payload)
     print(r.status_code, r.reason)
     print(r.text)
     #print(r.headers)

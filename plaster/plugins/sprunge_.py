@@ -10,10 +10,9 @@ import requests
 
 
 url = "http://sprunge.us"
-payload = "sprunge=boo7"
 
-def posts():
+def posts(payload):
     '''alt plugin for sprunge'''
-    r = requests.post(url, data=payload)
+    r = requests.post(url, data= "sprunge=" + payload)
     print(r.text)
     #print(r.status_code, r.reason)

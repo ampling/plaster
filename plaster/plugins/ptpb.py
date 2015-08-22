@@ -10,12 +10,11 @@ import http.client
 #import ssl
 
 url = "https://ptpb.pw"
-payload = "ptpb=boo4"
 
 def posts():
     '''plugin for ptpb'''
     conn = http.client.HTTPSConnection(url)
-    conn.request("POST", "/", payload)
+    conn.request("POST", "/", "ptpb=" + payload)
     resp = conn.getresponse()
     print(resp.status, resp.reason)
     print(resp.read())
