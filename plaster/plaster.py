@@ -17,8 +17,7 @@ import configparser
 config = configparser.ConfigParser()
 config.sections()
 config.read('plaster.conf')
-list = config.sections()
-pb = list[0]
+
 
 for payload in fileinput.input():
     sprunge_.posts(payload)
