@@ -1,8 +1,7 @@
 #! /usr/bin/env python3
-
 ##############################################################################
 #
-# Copycenter (c) [2015-08-06], ISC, [Ampling]
+# Copycenter (c) [2015-08-06], ISC, [Ampling <plaster@ampling.com>]
 #
 ##############################################################################
 """ Plaster
@@ -19,5 +18,7 @@ config.sections()
 config.read('plaster.conf')
 
 
+
 for payload in fileinput.input():
+    if 
     sprunge_.posts(payload)
