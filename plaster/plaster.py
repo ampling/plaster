@@ -19,16 +19,18 @@ config = configparser.ConfigParser()
 config.sections()
 config.read('plaster.conf')
 
+def search_plugins(self):
+    '''searches plugins folder'''
+    list_plugins = glob("plugins/*.py")
+    if best_plugin not in list_plugins:
+        print("error: plugin not found")
+    
+plugin = "sprunge_"
+best_plugin = 'plugins/' + plugin + ".py"
 
 
-
-def look():
-    '''look in plugin filder'''
-    plugins = glob("plugins/*")
-    print(plugins[3])
-
-#for payload in fileinput.input():
-#    sprunge_.posts(payload)
+for payload in fileinput.input():
+    search_plugins(best_plugin)
+    sprunge_.posts(payload)
 
 
-look()

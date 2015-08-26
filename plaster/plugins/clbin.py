@@ -13,7 +13,7 @@ url = "https://clbin.com"
 def posts():
     '''plugin for clbin'''
     conn = http.client.HTTPConnection("https://clbin.com/")
-    conn.request("POST", "/", "clbin=" +payload)
+    conn.request("POST", "/", "clbin=" + payload)
     resp = conn.getresponse()
     print(resp.status, resp.reason)
     print(resp.read())
