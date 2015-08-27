@@ -8,11 +8,11 @@
 import http.client
 
 
-url = "http://sprunge.us"
+#url = "http://sprunge.us"
 
 def posts(payload):
     '''plugin for sprunge'''
-    conn = http.client.HTTPConnection("http://sprunge.us")
+    conn = http.client.HTTPConnection(url)
     conn.request("POST", "/", data="sprunge=" + payload)
     resp = conn.getresponse()
     print(resp.read())

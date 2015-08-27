@@ -8,7 +8,7 @@
 import requests
 
 
-url = "https://ptpb.pw"
+#url = "https://ptpb.pw"
 
 def posts():
     '''alt plugin for ptpb'''

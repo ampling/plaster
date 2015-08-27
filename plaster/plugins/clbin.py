@@ -8,11 +8,11 @@
 import http.client
 #import ssl
 
-url = "https://clbin.com"
+#url = "https://clbin.com"
 
-def posts():
+def posts(payload, url):
     '''plugin for clbin'''
-    conn = http.client.HTTPConnection("https://clbin.com/")
+    conn = http.client.HTTPConnection("url")
     conn.request("POST", "/", "clbin=" + payload)
     resp = conn.getresponse()
     print(resp.status, resp.reason)

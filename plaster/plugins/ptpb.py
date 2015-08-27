@@ -8,7 +8,7 @@
 import http.client
 #import ssl
 
-url = "https://ptpb.pw"
+#url = "https://ptpb.pw"
 
 def posts():
     '''plugin for ptpb'''

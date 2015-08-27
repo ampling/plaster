@@ -8,9 +8,9 @@
 import requests
 
 
-url = "http://sprunge.us"
+#url = "http://sprunge.us"
 
-def posts(payload):
+def posts(payload, url):
     '''alt plugin for sprunge'''
     r = requests.post(url, data= "sprunge=" + payload)
     print(r.text)
