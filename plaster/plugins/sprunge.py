@@ -8,8 +8,6 @@
 import http.client
 
 
-#url = "http://sprunge.us"
-
 def posts(payload):
     '''plugin for sprunge'''
     conn = http.client.HTTPConnection(url)

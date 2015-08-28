@@ -8,8 +8,6 @@
 import requests
 
 
-#url = "https://ptpb.pw"
-
 def posts():
     '''alt plugin for ptpb'''
     r = requests.post(url, data="ptpb" + payload)

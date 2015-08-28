@@ -8,8 +8,6 @@
 import requests
 
 
-#url = "https://clbin.com"
-
 def posts(payload, url):
     '''alt plugin for clbin'''
     r = requests.post(url, data="clbin=" + payload)

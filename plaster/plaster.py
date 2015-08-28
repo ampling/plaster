@@ -24,12 +24,11 @@ url = config[plugin]['url']
 #    plugin = config.sections()[n]
 #    print(plugin)
     
-
-
 from plugins import sprunge_ #fix needed
 
-
+#
 # helpers
+#
 
 def search_plugins(self):
     '''searches plugins folder'''

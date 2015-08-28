@@ -8,8 +8,6 @@
 import requests
 
 
-#url = "http://sprunge.us"
-
 def posts(payload, url):
     '''alt plugin for sprunge'''
     r = requests.post(url, data= "sprunge=" + payload)

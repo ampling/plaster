@@ -8,8 +8,6 @@
 import http.client
 #import ssl
 
-#url = "https://ptpb.pw"
-
 def posts():
     '''plugin for ptpb'''
     conn = http.client.HTTPSConnection(url)
