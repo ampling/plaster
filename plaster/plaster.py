@@ -13,12 +13,15 @@ from glob import glob
 import fileinput
 import configparser
 
-config = configparser.ConfigParser()
-config.sections()
-config.read('plaster.conf')
-config.sections()
-plugin = 'sprunge_'
-url = config[plugin]['url']
+def get_config(url, plugin):
+    config = configparser.ConfigParser()
+    config.sections()
+    config.read('plaster.conf')
+    config.sections()
+    plugin = 'sprunge_'
+    url = config[plugin]['url']
+    return (url, plugin)
+
 
 #for n in range(len(config.sections())):
 #    plugin = config.sections()[n]
@@ -36,9 +39,11 @@ def search_plugins(self):
     if best_plugin not in list_plugins:
         print("error: plugin not found")
 
+cat = get_configi(url, plugin) #fix
 # temp word fix
-best_plugin = 'plugins/' + plugin + ".py"
+best_plugin = 'plugins/' + cat + ".py"
 
 for payload in fileinput.input():
+    #get_config(url, plugin)
     search_plugins(best_plugin)
     sprunge_.posts(payload, url) #fix needed
