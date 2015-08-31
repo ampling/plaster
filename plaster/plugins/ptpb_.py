@@ -11,6 +11,7 @@ import requests
 def posts():
     '''alt plugin for ptpb'''
     r = requests.post(url, data="ptpb" + payload)
-    print(r.status_code, r.reason)
-    print(r.text)
+    link = r.text
+    #print(r.status_code, r.reason)
     #print(r.headers)
+    return link #sucess

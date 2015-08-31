@@ -11,6 +11,7 @@ import requests
 def posts(payload, url):
     '''alt plugin for clbin'''
     r = requests.post(url, data="clbin=" + payload)
-    print(r.status_code, r.reason)
-    print(r.text)
+    link = r.text
+    #print(r.status_code, r.reason)
     #print(r.headers)
+    return link # sucess

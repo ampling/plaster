@@ -11,5 +11,5 @@ import requests
 def posts(payload, url):
     '''alt plugin for sprunge'''
     r = requests.post(url, data= "sprunge=" + payload)
-    print(r.text)
-    #print(r.status_code, r.reason)
+    link = r.text
+    return link
