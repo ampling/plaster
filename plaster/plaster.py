@@ -12,7 +12,7 @@ Plaster is a configurable command-line pastebin client.
 from os import path
 import fileinput
 import configparser
-import importlib
+from importlib.machinery import SourceFileLoader
 from glob import glob # temp
 
 prefix = 'plugins/'
@@ -55,26 +55,20 @@ def scout_plugins(self):
         print("error: plugin " + best_plugin + " not found") #test me
 #}
 
-#{ 
-def _load(self):
-    filepath = './plugins/'
+#{   
+def _load():
+    path = './plugins/sprunge_.py'
     module_name = 'sprunge_'
-    spec = importlib.util.spec_from_file_location(module_name, filepath)
-    plugin = spec.load_module()
-    return plugin
+    spec = SourceFileLoader('plugin', path)
+    _plugin = spec.load_module()
+    return _plugin
 #}
 
-#_load('sprunge_')
-from plugins import sprunge_ # expand
+_load()
 
-####
-
+#from plugins import sprunge_ # expand
 #importlib.util.spec_from_file_location(module_name, filepath)
 #importlib.import_module('plugins/sprunge_')
-
-#for n in range(len(config.sections())):
-#    plugin = config.sections()[n]
-#    print(plugin)
 
 #add argparser
 
@@ -86,7 +80,7 @@ for payload in fileinput.input():
     plugin = cull_plugin()[0]
     url = cull_plugin()[1]
     scout_plugins(plugin)
-    link = sprunge_.posts(payload, url) # expand
+    link = _load().posts(payload, url) # expand
     if 'http' in link:
         print(link)
     
