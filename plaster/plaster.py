@@ -1,13 +1,14 @@
 #! /usr/bin/env python3
 ##############################################################################
 #
-# Copycenter (c) [2015-08-06], ISC, [Ampling <plaster@ampling.com>]
+# Copyright (c) [2015-08-06], ISC, [Ampling <plaster@ampling.com>]
 #
 ##############################################################################
-""" Plaster
+'''
+Plaster
 
 Plaster is a configurable command-line pastebin client.
-"""
+'''
 
 from os import path
 import fileinput
@@ -20,11 +21,11 @@ config_dir = path.expanduser("~") + 'config/plaster/config'
 config_file = 'plaster.conf'
 
 #
-# BEGIN helper funtions
+# BEGIN helper funtions _ use underscore
 #
 
 #{ Use early, use sparingly.
-def read_config(head):
+def _read_config(head):
     '''Parse configuration file, from top to bottom.'''
     config = configparser.ConfigParser()
     config.sections()
@@ -34,22 +35,22 @@ def read_config(head):
     #login =
     #passwords =
     return (plugin, url) # add login, password
-#{
-
-#{
-def cull_plugin(): #add: uptime[default=0]
-    '''Choose the best plugin for the job.'''
-    plugin = read_config(0)[0] # expand
-    url = read_config(0)[1]
-    path = prefix + plugin + ".py"
-    return (path, url)
 #}
 
 #{
-def scout_plugins(self):
+def _cull_plugin(): #add: uptime[default=0]
+    '''Choose the best plugin for the job.'''
+    plugin = _read_config(0)[0] #temporarily set for first
+    url = _read_config(0)[1]
+    path = prefix + plugin + ".py"
+    return (plugin, url, path)
+#}
+
+#{
+def _scout_plugins(self):
     '''Search plugins folder for desired plugin.'''
     list_plugins = glob("plugins/*.py")
-    path = cull_plugin()[0]
+    path = _cull_plugin()[2]
     if path not in list_plugins:
         print("error: plugin " + path + " not found") #test me
     return path
@@ -57,16 +58,11 @@ def scout_plugins(self):
 
 #{   
 def _load(plugin, path):
-    scout_plugins(plugin)
+    _scout_plugins(plugin)
     spec = SourceFileLoader(plugin, path)
     _plugin = spec.load_module()
     return _plugin
 #}
-
-
-#from plugins import sprunge_ # expand
-#importlib.util.spec_from_file_location(module_name, filepath)
-#importlib.import_module('plugins/sprunge_')
 
 #add argparser
 
@@ -74,11 +70,21 @@ def _load(plugin, path):
 # main
 #
 
-for payload in fileinput.input():
-    path = './plugins/sprunge_.py'
-    plugin = cull_plugin()[0]
-    url = cull_plugin()[1]
-    link = _load(plugin, path).posts(payload, url) # expand
-    if 'http' in link:
-        print(link)
-    
+def _plaster():
+    #read arguments
+    _read_config()
+    _cull_plugin()
+    _scout_plugin(path)
+    _load_plugin()
+    _plugin.posts()
+    return link
+
+payload = ''.join(fileinput.input())
+plugin = _cull_plugin()[0]
+url = _cull_plugin()[1]
+path = _cull_plugin()[2]
+#cull = [_cull_plugin()]
+#print(str(cull[1])
+link = _load(plugin, path).posts(payload, url)
+if 'http' in link:
+    print(link)
