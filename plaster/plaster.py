@@ -21,7 +21,7 @@ config_dir = path.expanduser("~") + 'config/plaster/config'
 config_file = 'plaster.conf'
 
 #
-# BEGIN helper funtions _ use underscore
+# BEGIN helper funtions 
 #
 
 #{ Use early, use sparingly.
@@ -40,7 +40,8 @@ def _read_config(head):
 #{
 def _cull_plugin(): #add: uptime[default=0]
     '''Choose the best plugin for the job.'''
-    plugin = _read_config(0)[0] #temporarily set for first
+    #add logic here
+    plugin = _read_config(0)[0] #temp
     url = _read_config(0)[1]
     path = prefix + plugin + ".py"
     return (plugin, url, path)
@@ -49,7 +50,7 @@ def _cull_plugin(): #add: uptime[default=0]
 #{
 def _scout_plugins(self):
     '''Search plugins folder for desired plugin.'''
-    list_plugins = glob("plugins/*.py")
+    list_plugins = glob("plugins/*.py") #debug
     path = _cull_plugin()[2]
     if path not in list_plugins:
         print("error: plugin " + path + " not found") #test me
@@ -70,7 +71,7 @@ def _load(plugin, path):
 # main
 #
 
-def _plaster():
+def __plaster():
     #read arguments
     _read_config()
     _cull_plugin()
@@ -79,12 +80,16 @@ def _plaster():
     _plugin.posts()
     return link
 
-payload = ''.join(fileinput.input())
-plugin = _cull_plugin()[0]
-url = _cull_plugin()[1]
-path = _cull_plugin()[2]
-#cull = [_cull_plugin()]
-#print(str(cull[1])
-link = _load(plugin, path).posts(payload, url)
-if 'http' in link:
-    print(link)
+def __main__():
+    payload = ''.join(fileinput.input())
+    plugin = _cull_plugin()[0]
+    url = _cull_plugin()[1]
+    path = _cull_plugin()[2]
+    #cull = [_cull_plugin()]
+    #print(str(cull[1])
+    link = _load(plugin, path).posts(payload, url)
+    if 'http' in link:
+        print(link)
+
+if __name__ == "__main__":
+    __main__()
