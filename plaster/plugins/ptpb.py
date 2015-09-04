@@ -8,7 +8,7 @@
 import http.client
 #import ssl
 
-def posts():
+def push():
     '''plugin for ptpb'''
     conn = http.client.HTTPSConnection(url)
     conn.request("POST", "/", "ptpb=" + payload)

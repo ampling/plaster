@@ -8,7 +8,7 @@
 import http.client
 #import ssl
 
-def posts(payload, url):
+def push(payload, url):
     '''plugin for clbin'''
     conn = http.client.HTTPConnection("url")
     conn.request("POST", "/", "clbin=" + payload)

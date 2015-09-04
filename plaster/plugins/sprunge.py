@@ -8,7 +8,7 @@
 import http.client
 
 
-def posts(payload):
+def push(payload):
     '''plugin for sprunge'''
     conn = http.client.HTTPConnection(url)
     conn.request("POST", "/", data="sprunge=" + payload)

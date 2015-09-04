@@ -8,7 +8,7 @@
 import requests
 
 
-def posts(payload, url):
+def push(payload, url):
     '''alt plugin for clbin'''
     r = requests.post(url, data="clbin=" + payload)
     link = r.text

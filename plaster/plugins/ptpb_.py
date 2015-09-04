@@ -8,7 +8,7 @@
 import requests
 
 
-def posts():
+def push():
     '''alt plugin for ptpb'''
     r = requests.post(url, data="ptpb" + payload)
     link = r.text
