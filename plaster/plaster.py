@@ -11,10 +11,12 @@ Plaster is a configurable command-line pastebin client.
 '''
 
 from os import path, readlink
-import fileinput
 import configparser
 from importlib.machinery import SourceFileLoader
 from glob import glob
+from sys import stdin
+
+import magic
 
 prefix = 'plugins'
 config_file = 'plaster.conf'
@@ -60,30 +62,21 @@ def _load_plugin(plugin_name):
     _plugin = spec.load_module()
     return _plugin
 
-def detect_type(ext):
-    raster = ['png', 'jpg', 'jpe', 'jpeg', 'giff', 'tiff', 'bmp', 'riff', 
-            'exif', 'ppm', 'pgm', 'pbm', 'pnm']
-    vector = ['svg','cgm',]
-    print(ext)
-    if ext in (raster or vector):
-        image = 'true'
-        return image
-    elif ext not in (raster or vector):
-        image = 'false'
-        return image
+#def detect_type(ext):
+    
+
 #add argparser
     #-t = time to expire
     #-s = secure (use *tls )
+    #-f = file
 
 #
 # main
 #
 
 def __main__():
-    payload = ''.join(fileinput.input())
-    f = readlink('/proc/self/fd/0') #linux only
-    ext = f.split('.')[-1]
-    print(detect_type(ext))
+    payload = ''.join(stdin.readline())
+    
     cull_ref = _cull_plugin()
     found_plugin = _scout_dir(_cull_plugin()[0])
     plugin_name = cull_ref[0] 
@@ -94,8 +87,9 @@ def __main__():
 
 
 def __test__():
-    ext = 'txt'
-    print(detect_type(ext))
+    f = stdin()
+    print(magic.from_buffer(open(f)))
+
 
 if __name__ == "__main__":
     __main__()
