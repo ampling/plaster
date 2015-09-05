@@ -10,17 +10,16 @@ PLASTER
 Plaster is a configurable command-line pastebin client.
 '''
 
-from os import path, readlink
+import os
 import configparser
 from importlib.machinery import SourceFileLoader
 from glob import glob
 from sys import stdin
 
-import magic
 
 prefix = 'plugins'
 config_file = 'plaster.conf'
-config_dir = path.expanduser("~") + 'config/plaster/config'
+config_dir = os.path.expanduser("~") + 'config/plaster/config'
 
 #
 # BEGIN helper funtions 
@@ -62,13 +61,18 @@ def _load_plugin(plugin_name):
     _plugin = spec.load_module()
     return _plugin
 
-#def detect_type(ext):
-    
+def detect_raster(subject):
+    textchars = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - 
+            {0x7f})
+    is_binary_string = lambda bytes: bool(bytes.translate(None, textchars)) 
+    cat = is_binary_string(open(subject, 'rb').read(1024))
+    print(cat)
+
+
 
 #add argparser
     #-t = time to expire
     #-s = secure (use *tls )
-    #-f = file
 
 #
 # main
@@ -87,10 +91,18 @@ def __main__():
 
 
 def __test__():
-    f = stdin()
-    print(magic.from_buffer(open(f)))
+    #subject = os.open(''.join(stdin.readline()), "rb", buffering=0)
+    #subject = ''.join(stdin.readline())
+    import sys, io
+    BINARY=True
+    istream = sys.stdin
+    global subject
+    subject = istream.read()
+    print("len="+str(len(subject)))
+    
+    detect_raster(subject)
 
 
 if __name__ == "__main__":
-    __main__()
-    #__test__()
+    #__main__()
+    __test__()
