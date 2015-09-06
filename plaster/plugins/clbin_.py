@@ -8,7 +8,16 @@
 import requests
 
 
-def push(payload, url):
+def format():
+    '''Availability'''
+    txt = 'yes'
+    img = 'yes'
+    tls = 'yes'
+    time = 'no'
+    form = {'txt': txt, 'img': img, 'tls': tls, 'time': time}
+    return form  
+
+def plaster(payload, url):
     '''alt plugin for clbin'''
     r = requests.post(url, data="clbin=" + payload)
     link = r.text

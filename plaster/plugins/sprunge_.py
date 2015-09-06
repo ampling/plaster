@@ -7,15 +7,17 @@
 
 import requests
 
+
 def format():
+    '''Availability'''
     txt = 'yes'
     img = 'no'
     tls = 'no'
-    form = {'txt': txt, 'img': img, 'tls': tls}
+    time = 'no'
+    form = {'txt': txt, 'img': img, 'tls': tls, 'time': time}
     return form 
 
-
-def push(payload, url):
+def plaster(payload, url):
     '''alt plugin for sprunge'''
     r = requests.post(url, data= "sprunge=" + payload)
     link = r.text

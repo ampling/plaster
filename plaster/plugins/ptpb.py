@@ -8,7 +8,16 @@
 import http.client
 #import ssl
 
-def push():
+def format():
+    '''Availability'''
+    txt = 'yes'
+    img = 'yes'
+    tls = 'yes'
+    time = 'yes'
+    form = {'txt': txt, 'img': img, 'tls': tls, 'time': time}
+    return form 
+
+def plaster():
     '''plugin for ptpb'''
     conn = http.client.HTTPSConnection(url)
     conn.request("POST", "/", "ptpb=" + payload)

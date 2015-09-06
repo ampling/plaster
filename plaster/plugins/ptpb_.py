@@ -8,7 +8,16 @@
 import requests
 
 
-def push():
+def format():
+    '''Availability'''
+    txt = 'yes'
+    img = 'yes'
+    tls = 'yes'
+    time = 'yes'
+    form = {'txt': txt, 'img': img, 'tls': tls, 'time': time}
+    return form 
+
+def plaster():
     '''alt plugin for ptpb'''
     r = requests.post(url, data="ptpb" + payload)
     link = r.text

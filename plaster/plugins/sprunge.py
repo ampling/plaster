@@ -8,7 +8,16 @@
 import http.client
 
 
-def push(payload):
+def format():
+    '''Availability'''
+    txt = 'no'
+    img = 'no'
+    tls = 'no'
+    time = 'no'
+    form = {'txt': txt, 'img': img, 'tls': tls, 'time': time}
+    return form 
+
+def plaster(payload):
     '''plugin for sprunge'''
     conn = http.client.HTTPConnection(url)
     conn.request("POST", "/", data="sprunge=" + payload)
