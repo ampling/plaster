@@ -14,7 +14,7 @@ import os
 import configparser
 from importlib.machinery import SourceFileLoader
 from glob import glob
-from sys import stdin
+import sys
 
 
 prefix = 'plugins'
@@ -34,11 +34,11 @@ def _read_config():
     return (config_ref)
 #}
 
-def _cull_plugin(): #add: time_to_expire[default=0]
+def _cull_plugin(): # add: time_to_expire[default=0]
     '''Choose the best plugin for the job.'''
-    #if config_ref doesn't exist
+    # if config_ref doesn't exist
     config_ref = _read_config()
-    #decision-time
+    # decision-time
     n = 0 #debug
     plugin_name = config_ref.sections()[n]
     plugin_url = config_ref[plugin_name]['url']
@@ -65,14 +65,14 @@ def detect_raster(subject):
     textchars = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - 
             {0x7f})
     is_binary_string = lambda bytes: bool(bytes.translate(None, textchars)) 
-    cat = is_binary_string(open(subject, 'rb').read(1024))
+    cat = is_binary_string(subject)
     print(cat)
 
 
 
 #add argparser
-    #-t = time to expire
-    #-s = secure (use *tls )
+    # -t = time to expire
+    # -s = secure (use *tls )
 
 #
 # main
@@ -91,15 +91,13 @@ def __main__():
 
 
 def __test__():
-    #subject = os.open(''.join(stdin.readline()), "rb", buffering=0)
-    #subject = ''.join(stdin.readline())
-    import sys, io
+    # subject = os.open(''.join(stdin.readline()), "rb", buffering=0)
+    # subject = ''.join(stdin.readline())
     BINARY=True
     istream = sys.stdin
     global subject
     subject = istream.read()
     print("len="+str(len(subject)))
-    
     detect_raster(subject)
 
 
