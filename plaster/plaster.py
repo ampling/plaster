@@ -14,7 +14,7 @@ import os
 import configparser
 from importlib.machinery import SourceFileLoader
 from glob import glob
-import sys
+from sys import stdin
 
 
 prefix = 'plugins'
@@ -25,14 +25,13 @@ config_dir = os.path.expanduser("~") + 'config/plaster/config'
 # BEGIN helper funtions 
 #
 
-#{ Use early, use sparingly.
+## Use early, use sparingly.
 def _read_config():
     '''Parse configuration file, from top to bottom.'''
     config = configparser.ConfigParser()
     config.read(config_file)
     config_ref = config
     return (config_ref)
-#}
 
 def _cull_plugin(): # add: time_to_expire[default=0]
     '''Choose the best plugin for the job.'''
@@ -61,13 +60,11 @@ def _load_plugin(plugin_name):
     _plugin = spec.load_module()
     return _plugin
 
-def detect_raster(subject):
-    textchars = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - 
-            {0x7f})
-    is_binary_string = lambda bytes: bool(bytes.translate(textchars)) 
-    answer = is_binary_string(subject)
-    print(answer)
-
+def detect_text(payload):
+    txt = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - {0x7f})
+    is_binary_string = lambda bytes: bool(bytes.translate(txt)) 
+    global answer
+    answer = is_binary_string(payload)
 
 
 # add argparser
@@ -79,8 +76,8 @@ def detect_raster(subject):
 #
 
 def __main__():
-    payload = ''.join(stdin.readline())
-    
+    payload = stdin.read()
+    detect_text(payload)
     cull_ref = _cull_plugin()
     found_plugin = _scout_dir(_cull_plugin()[0])
     plugin_name = cull_ref[0] 
@@ -91,16 +88,14 @@ def __main__():
 
 
 def __test__():
-    # subject = os.open(''.join(stdin.readline()), "rb", buffering=0)
-    # subject = ''.join(stdin.readline())
-    # BINARY = True
-    istream = sys.stdin
-    global subject
-    subject = istream.read()
-    print("len="+str(len(subject)))
-    detect_raster(subject)
-
+    # payload = os.open(''.join(stdin.readline()), "rb", buffering=0)
+    # payload = ''.join(stdin.readline())
+    # print("len="+str(len(payload)))
+    # payload = ''.join(stdin.readline())
+    istream = stdin
+    payload = istream.read()
+    detect_text(payload)
 
 if __name__ == "__main__":
-    # __main__()
-    __test__()
+    __main__()
+    # __test__()
