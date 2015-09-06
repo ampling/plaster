@@ -64,13 +64,13 @@ def _load_plugin(plugin_name):
 def detect_raster(subject):
     textchars = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - 
             {0x7f})
-    is_binary_string = lambda bytes: bool(bytes.translate(None, textchars)) 
-    cat = is_binary_string(subject)
-    print(cat)
+    is_binary_string = lambda bytes: bool(bytes.translate(textchars)) 
+    answer = is_binary_string(subject)
+    print(answer)
 
 
 
-#add argparser
+# add argparser
     # -t = time to expire
     # -s = secure (use *tls )
 
@@ -93,7 +93,7 @@ def __main__():
 def __test__():
     # subject = os.open(''.join(stdin.readline()), "rb", buffering=0)
     # subject = ''.join(stdin.readline())
-    BINARY=True
+    # BINARY = True
     istream = sys.stdin
     global subject
     subject = istream.read()
@@ -102,5 +102,5 @@ def __test__():
 
 
 if __name__ == "__main__":
-    #__main__()
+    # __main__()
     __test__()
