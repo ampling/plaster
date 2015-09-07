@@ -11,10 +11,12 @@ Plaster is a configurable command-line pastebin client.
 '''
 
 import os
+import argparse
 import configparser
-from importlib.machinery import SourceFileLoader
+import logging as log
 from glob import glob
 from sys import stdin
+from importlib.machinery import SourceFileLoader
 
 prefix = 'plugins'
 config_file = 'plaster.conf'
@@ -30,47 +32,47 @@ def _read_config():
     config = configparser.ConfigParser()
     config.read(config_file)
     config_ref = config
-    print('Configuration file read.') # debug
+    log.info('Configuration file read.')
     return (config_ref)
 
 def _cull_plugin(style): # add: time_to_expire[default=0]
     '''Choose the best plugin for the job.'''
     config_ref = _read_config()
-   
-    # decision-time
     run = len(config_ref.sections())
-    # print(run)
-    for n in range(0, run):
-        print(n)
-        plugin_name = config_ref.sections()[n]
+    for mark in range(0, run):
+        plugin_name = config_ref.sections()[mark]
         form = _load_plugin(plugin_name).format()
-        if form['txt'] is 'no' and style is True:
-            print('Sorry text')
-        if form['img'] is 'no' and style is False:
-            print('Sorry image')
-    
+        if (form['txt'] is 'no' and style is True) or (form['img'] is 'no' and style is False):
+            print("plugin", plugin_name, "skipped") # debug
+            ## exception needed 
         if (form['txt'] is 'yes' and style is True) or (form['img'] is 'yes' and style is False):
-            break
+            found =  _scout_dir(plugin_name)
+            if found is True:
+                break
+            elif found is False:
+                continue
+
     plugin_url = config_ref[plugin_name]['url']
-    return (plugin_name, plugin_url)
+    return (plugin_name, plugin_url, mark)
 
 def _scout_dir(plugin_name):
     '''Check plugins folder for desired plugin.'''
     list_plugins = glob(prefix + "/"  + "*.py")
     plugin_path = prefix + "/" + plugin_name + ".py" 
     if plugin_path not in list_plugins:
-        print('plugin error:', plugin_name, 'not found')
+        found = False
+        log.error('plugin error:', plugin_name, 'not found')
     elif plugin_path in list_plugins:
-        found_plugin = plugin_name
-        print('scout successful')
-        return found_plugin 
+        found = True
+        log.info('scout successful')
+        return found 
 
 def _load_plugin(plugin_name):
     '''Import a dynamic module'''
     plugin_path = prefix + "/"  + plugin_name + ".py"
     spec = SourceFileLoader(plugin_name, plugin_path)
     _plugin = spec.load_module()
-    print('plugin', plugin_name, 'loaded') # debug
+    log.info('plugin loaded')
     return _plugin
 
 def _inspect_form(plugin_name):
@@ -92,6 +94,20 @@ def detect_style(payload):
     # -x = xclip 'send link to clipboard'
     # -v = versose 'debuging'
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-v", "--verbose", 
+        help="increase output verbosity", action="store_true")
+args = parser.parse_args()
+if args.verbose:
+    log.basicConfig(format="%(levelname)s: %(message)s", level=log.DEBUG)
+    # log.info("Verbose output.")
+else:
+    log.basicConfig(format="%(levelname)s: %(message)s")
+
+# log.info("This should be verbose.")
+# log.warning("This is a warning.")
+# log.error("This is an error.")
+
 
 #
 # main
@@ -104,23 +120,25 @@ def __main__():
     cull_ref = _cull_plugin(style)
     plugin_name = cull_ref[0] 
     plugin_url = cull_ref[1]
-    found_plugin = _scout_dir(plugin_name)
+    # found_plugin = _scout_dir(plugin_name)
     
-    link = _load_plugin(found_plugin).plaster(payload, plugin_url)
+    link = _load_plugin(plugin_name).plaster(payload, plugin_url)
     #_inspect_form(plugin_name)
     
-    if 'http' in link:
+    if 'http' in link: # might be better to change to code 200
         print(link)
+    # if http not in link:  # go back to cull
+    #     pass mark to cull
 
 def __test__():
     # payload = stdin.read()
     # form = _load_plugin('sprunge_').format()
     # print(form)
     # _cull_plugin(detect_style(payload))
-    _scout_dir("sprunge_")
+    # style = detect_style(payload)
+    # print(style)
+    log.info('test')
 
-    #style = detect_style(payload)
-    #print(style)
 
 if __name__ == "__main__":
     __main__()
