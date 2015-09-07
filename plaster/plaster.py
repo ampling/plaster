@@ -1,13 +1,16 @@
 #! /usr/bin/env python3
 ##############################################################################
 #
-# Copyright (c) [2015-08-06], ISC, [Ampling <plaster@ampling.com>]
+# Copyright (c) [2015-08-06], ISC license, [Ampling <plaster@ampling.com>]
 #
 ##############################################################################
 '''
-PLASTER
+ ____  __      __    ___  ____  ____  ____ 
+(  _ \(  )    /__\  / __)(_  _)( ___)(  _ \
+ )___/ )(__  /(__)\ \__ \  )(   )__)  )   /
+(__)  (____)(__)(__)(___/ (__) (____)(_)\_)
 
-Plaster is a configurable command-line pastebin client.
+Plaster is an adaptable command-line pastebin client.
 '''
 
 import os
@@ -75,9 +78,6 @@ def _load_plugin(plugin_name):
     log.info('plugin loaded')
     return _plugin
 
-def _inspect_form(plugin_name):
-    print('temp')
-
 def detect_style(payload):
     '''Test each payload in an attempt to clasify it.
     A simple heuristic based on file(1).
@@ -88,16 +88,26 @@ def detect_style(payload):
     style = is_binary_string(payload)
     return style
 
-# add argparser
-    # -t = time to expire
-    # -s = secure 'use tls'
-    # -x = xclip 'send link to clipboard'
-    # -v = versose 'debuging'
+#
+# options
+#
 
 parser = argparse.ArgumentParser()
+# parser.add_argument("-s", "--secure", 
+#         help="secure tls", action="store_true")
+# parser.add_argument("-t", "--time", 
+#         help="time to expire", action="store_true")
 parser.add_argument("-v", "--verbose", 
         help="increase output verbosity", action="store_true")
+# parser.add_argument("-x", "--xclip", 
+#         help="send link to clipboard", action="store_true")
+
+
 args = parser.parse_args()
+# if args.secure:
+#     print('secure')
+# if args.time:
+#     print('time')
 if args.verbose:
     log.basicConfig(format="%(levelname)s: %(message)s", level=log.DEBUG)
     # log.info("Verbose output.")
@@ -108,35 +118,29 @@ else:
 # log.warning("This is a warning.")
 # log.error("This is an error.")
 
+# if args.xclip:
+#     print('xclip')
 
 #
 # main
 #
 
 def __main__():
-    '''Execute funtions in the correct order'''
+    '''Plaster all the things!'''
     payload = stdin.read()
     style = detect_style(payload)
     cull_ref = _cull_plugin(style)
     plugin_name = cull_ref[0] 
     plugin_url = cull_ref[1]
-    # found_plugin = _scout_dir(plugin_name)
-    
     link = _load_plugin(plugin_name).plaster(payload, plugin_url)
-    #_inspect_form(plugin_name)
-    
+     
     if 'http' in link: # might be better to change to code 200
         print(link)
+    
     # if http not in link:  # go back to cull
     #     pass mark to cull
 
 def __test__():
-    # payload = stdin.read()
-    # form = _load_plugin('sprunge_').format()
-    # print(form)
-    # _cull_plugin(detect_style(payload))
-    # style = detect_style(payload)
-    # print(style)
     log.info('test')
 
 
