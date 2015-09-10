@@ -71,13 +71,12 @@ def _relay_command(style):
         pass
     return command
 
-def _cull_plugin(command): # add (run, mark) 
+def _cull_plugin(command, config_ref, run,  mark): # add (run, mark) 
     '''Choose the best plugin for the job.'''
-    config_ref = _read_config()
-    run = len(config_ref.sections())
     try:
-        for mark in range (0, run):
+        for mark in range(mark, run):
             plugin_name = config_ref.sections()[mark]
+            log.info(plugin_name)
             form = _load_plugin(plugin_name).format()
             diff = set(form.keys()) - set(command.keys())
             sim = set(command.items()) & set(form.items())
@@ -86,11 +85,10 @@ def _cull_plugin(command): # add (run, mark)
                 break
             if len(sim) is not len(command):
                 log.info('skipped')
-
     except:
+        log.info('Connection error. Attempting to compensate.')
         pass
-    plugin_url = config_ref[plugin_name]['url']
-    return (plugin_name, plugin_url, mark)
+    return (plugin_name, mark)
 
 def _scout_dir(plugin_name):
     '''Check plugins folder for desired plugin.'''
@@ -123,12 +121,12 @@ def _load_plugin(plugin_name):
 #
 
 parser = argparse.ArgumentParser()
-# parser.add_argument("-l", "--login", 
-#         help="read login", action="store_true")
-# parser.add_argument("-s", "--secure", 
-#         help="secure tls", action="store_true")
-# parser.add_argument("-t", "--time", 
-#         help="time to expire", action="store_true")
+parser.add_argument("-l", "--login", 
+        help="read login", action="store_true")
+parser.add_argument("-s", "--secure", 
+        help="secure tls", action="store_true")
+parser.add_argument("-t", "--time", 
+        help="time to expire", action="store_true")
 parser.add_argument("-v", "--verbose", 
         help="increase output verbosity", action="store_true")
 # parser.add_argument("-x", "--xclip", 
@@ -147,7 +145,7 @@ else:
 
 # if args.xclip:
 #     print('xclip')
-
+#     pyperclip.copy(link)
 
 #
 # main
@@ -158,30 +156,39 @@ def __main__():
     payload = stdin.read()
     style = detect_style(payload)
     command = _relay_command(style)
-    cull_ref = _cull_plugin(command)
-    plugin_name = cull_ref[0] 
-    plugin_url = cull_ref[1]
-    link = _load_plugin(plugin_name).plaster(payload, plugin_url)
-     
-    if 'http' in link: # might be better to change to code 200
-        print(link)
+    config_ref = _read_config()
+    run = len(config_ref.sections())
     
-    # if http not in link:  # go back to cull
-    #     pass mark to cull
+    attemps = '2'
+    tries = '1'
+    mark = 0
+
+    for attemps in range(0, run):
+        try:
+            cull_ref = _cull_plugin(command, config_ref, run, mark)
+            plugin_name = cull_ref[0] 
+            plugin_url = config_ref[plugin_name]['url']
+            link = _load_plugin(plugin_name).plaster(payload, plugin_url)
+            if 'http' in link: # might be better to change to code 200
+                print(link)
+                break
+        except:
+            mark = mark + 1
+            pass
+
 
 def __test__(): 
     log.info('test')
     ###
 
-    #payload = stdin.read()
-    #style = detect_style(payload)
+    config_ref = _read_config()
     command = _relay_command(True)
-    best = _cull_plugin(command) 
+    mark = 0
+    best = _cull_plugin(command, config_ref, mark) 
     print(best)
 
 
 
-
 if __name__ == "__main__":
-     __main__()
-    #__test__()
+    __main__()
+    # __test__()

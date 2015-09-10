@@ -14,13 +14,14 @@ def format():
     img = 'yes'
     tls = 'yes'
     time = 'no'
-    form = {'txt': txt, 'img': img, 'tls': tls, 'time': time}
+    nick = 'no'
+    form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
     return form  
 
 def plaster(payload, url):
     '''alt plugin for clbin'''
-    r = requests.post(url, data="clbin=" + payload)
+    r = requests.post(url, data="clbin=@" + payload)
     link = r.text
-    #print(r.status_code, r.reason)
-    #print(r.headers)
+    print(r.status_code, r.reason)
+    print(r.headers)
     return link # sucess

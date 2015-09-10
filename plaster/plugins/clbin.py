@@ -14,7 +14,8 @@ def format():
     img = 'yes'
     tls = 'yes'
     time = 'no'
-    form = {'txt': txt, 'img': img, 'tls': tls, 'time': time}
+    nick = 'no'
+    form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
     return form 
 
 def plaster(payload, url):
