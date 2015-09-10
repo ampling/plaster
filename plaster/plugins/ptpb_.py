@@ -18,10 +18,28 @@ def format():
     form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
     return form 
 
-def plaster():
+def plaster(payload, url):
     '''alt plugin for ptpb'''
-    r = requests.post(url, data="ptpb" + payload)
-    link = r.text
+    data = {'ptpb': payload}
+    r = requests.post(url, data)
+    
+    #link = r.text
+    print(r.status_code, r.reason)
+    #print(r.headers)
+    #return link # sucess
+    code = r.status_code
+    OK = r.status_code == requests.codes.ok
+    try:
+        if OK is True:
+            print(r.text)
+    except:
+        print('ops')
+        pass
+
+
+
+    
+    #link = r.text
     #print(r.status_code, r.reason)
     #print(r.headers)
-    return link #sucess
+    #return link #sucess

@@ -20,6 +20,6 @@ def format():
 
 def plaster(payload, url):
     '''alt plugin for sprunge'''
-    r = requests.post(url, data= "sprunge=" + payload)
+    r = requests.post(url, data= str("sprunge=" + payload))
     link = r.text
     return link

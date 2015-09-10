@@ -21,9 +21,10 @@ from glob import glob
 from sys import stdin
 from importlib.machinery import SourceFileLoader
 
-prefix = 'plugins'
-config_file = 'plaster.conf'
-config_dir = os.path.expanduser("~") + 'config/plaster/config'
+
+config_dir = os.path.expanduser("~") + '/' + '.config/plaster/'
+prefix = config_dir + 'plugins'
+config_file = config_dir + 'config'
 
 #
 # BEGIN helper funtions 
@@ -71,8 +72,10 @@ def _relay_command(style):
         pass
     return command
 
-def _cull_plugin(command, config_ref, run,  mark): # add (run, mark) 
+def _cull_plugin(command, mark): # add (run, mark) 
     '''Choose the best plugin for the job.'''
+    global config_ref
+    run = len(config_ref.sections())
     try:
         for mark in range(mark, run):
             plugin_name = config_ref.sections()[mark]
@@ -86,7 +89,7 @@ def _cull_plugin(command, config_ref, run,  mark): # add (run, mark)
             if len(sim) is not len(command):
                 log.info('skipped')
     except:
-        log.info('Connection error. Attempting to compensate.')
+        log.info('Attempting to adapt to connection error')
         pass
     return (plugin_name, mark)
 
@@ -109,8 +112,6 @@ def _load_plugin(plugin_name):
     _plugin = spec.load_module()
     log.info('plugin loaded')
     return _plugin
-
-
 
 # add passwordeval
 #def passwordeval():
@@ -156,17 +157,16 @@ def __main__():
     payload = stdin.read()
     style = detect_style(payload)
     command = _relay_command(style)
+    global config_ref
     config_ref = _read_config()
-    run = len(config_ref.sections())
-    
-    attemps = '2'
-    tries = '1'
+    run = len(config_ref.sections()) + 1
+    attemps = '0'
     mark = 0
-
     for attemps in range(0, run):
         try:
-            cull_ref = _cull_plugin(command, config_ref, run, mark)
+            cull_ref = _cull_plugin(command, mark)
             plugin_name = cull_ref[0] 
+            url = config_ref[plugin_name]['url']
             plugin_url = config_ref[plugin_name]['url']
             link = _load_plugin(plugin_name).plaster(payload, plugin_url)
             if 'http' in link: # might be better to change to code 200
@@ -175,20 +175,22 @@ def __main__():
         except:
             mark = mark + 1
             pass
-
+    return link
 
 def __test__(): 
-    log.info('test')
+    log.info('debug mode')
     ###
-
-    config_ref = _read_config()
-    command = _relay_command(True)
-    mark = 0
-    best = _cull_plugin(command, config_ref, mark) 
-    print(best)
+    payload = 'debug this'
+    style = detect_style(payload)
+    command = _relay_command(style)
+    plugin_name = 'clbin_'
+    plugin_path = prefix + "/"  + plugin_name + ".py"
+    plugin_url = 'https://clbin.com'
+    link = _load_plugin(plugin_name).plaster(payload, plugin_url)
 
 
 
 if __name__ == "__main__":
     __main__()
     # __test__()
+

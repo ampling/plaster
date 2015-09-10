@@ -20,8 +20,16 @@ def format():
 
 def plaster(payload, url):
     '''alt plugin for clbin'''
-    r = requests.post(url, data="clbin=@" + payload)
-    link = r.text
-    print(r.status_code, r.reason)
-    print(r.headers)
-    return link # sucess
+    data = {'clbin': payload}
+    r = requests.post(url, data)
+    code = r.status_code
+    OK = r.status_code == requests.codes.ok
+    try:
+        if OK is True:
+            link = r.text
+            #print(r.text)
+    except:
+        print('ops')
+        pass
+    
+    return link 
