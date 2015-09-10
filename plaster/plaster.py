@@ -38,23 +38,57 @@ def _read_config():
     log.info('Configuration file read.')
     return (config_ref)
 
-def _cull_plugin(style): # add: time_to_expire[default=0]
+def detect_style(payload):
+    '''Test each payload in an attempt to clasify it.
+    A simple heuristic based on file(1).
+    If characters in payload resemble text return True. 
+    If characters in payload resemble binary return False.'''
+    txt = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - {0x7f})
+    is_binary_string = lambda bytes: bool(bytes.translate(txt)) 
+    style = is_binary_string(payload)
+    return style
+
+def _relay_command(style):
+    '''define local parameters'''
+    if style is True:
+        command = {'txt': 'yes'}
+    if style is False:
+        command = {'img': 'yes'}
+    try:
+        if args.login:
+            command.update({'nick': 'yes'})
+            log.info('login')
+        if args.secure:
+            command.update({'tls': 'yes'})
+            log.info('secure')
+        if args.secure:
+            command.update({'tls': 'yes'})
+            log.info('secure')
+        if args.time:
+            command.update({'time': 'yes'})
+            log.info('time') 
+    except:
+        pass
+    return command
+
+def _cull_plugin(command): # add (run, mark) 
     '''Choose the best plugin for the job.'''
     config_ref = _read_config()
     run = len(config_ref.sections())
-    for mark in range(0, run):
-        plugin_name = config_ref.sections()[mark]
-        form = _load_plugin(plugin_name).format()
-        if (form['txt'] is 'no' and style is True) or (form['img'] is 'no' and style is False):
-            print("plugin", plugin_name, "skipped") # debug
-            ## exception needed 
-        if (form['txt'] is 'yes' and style is True) or (form['img'] is 'yes' and style is False):
-            found =  _scout_dir(plugin_name)
-            if found is True:
+    try:
+        for mark in range (0, run):
+            plugin_name = config_ref.sections()[mark]
+            form = _load_plugin(plugin_name).format()
+            diff = set(form.keys()) - set(command.keys())
+            sim = set(command.items()) & set(form.items())
+            if len(sim) is len(command):
+                log.info('pluggin tests OK')
                 break
-            elif found is False:
-                continue
+            if len(sim) is not len(command):
+                log.info('skipped')
 
+    except:
+        pass
     plugin_url = config_ref[plugin_name]['url']
     return (plugin_name, plugin_url, mark)
 
@@ -78,21 +112,19 @@ def _load_plugin(plugin_name):
     log.info('plugin loaded')
     return _plugin
 
-def detect_style(payload):
-    '''Test each payload in an attempt to clasify it.
-    A simple heuristic based on file(1).
-    If characters in payload resemble text return True. 
-    If characters in payload resemble binary return False.'''
-    txt = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - {0x7f})
-    is_binary_string = lambda bytes: bool(bytes.translate(txt)) 
-    style = is_binary_string(payload)
-    return style
+
+
+# add passwordeval
+#def passwordeval():
+#    gpg
 
 #
 # options
 #
 
 parser = argparse.ArgumentParser()
+# parser.add_argument("-l", "--login", 
+#         help="read login", action="store_true")
 # parser.add_argument("-s", "--secure", 
 #         help="secure tls", action="store_true")
 # parser.add_argument("-t", "--time", 
@@ -102,15 +134,10 @@ parser.add_argument("-v", "--verbose",
 # parser.add_argument("-x", "--xclip", 
 #         help="send link to clipboard", action="store_true")
 
-
 args = parser.parse_args()
-# if args.secure:
-#     print('secure')
-# if args.time:
-#     print('time')
 if args.verbose:
     log.basicConfig(format="%(levelname)s: %(message)s", level=log.DEBUG)
-    # log.info("Verbose output.")
+    log.info("Verbose output.")
 else:
     log.basicConfig(format="%(levelname)s: %(message)s")
 
@@ -121,6 +148,7 @@ else:
 # if args.xclip:
 #     print('xclip')
 
+
 #
 # main
 #
@@ -129,7 +157,8 @@ def __main__():
     '''Plaster all the things!'''
     payload = stdin.read()
     style = detect_style(payload)
-    cull_ref = _cull_plugin(style)
+    command = _relay_command(style)
+    cull_ref = _cull_plugin(command)
     plugin_name = cull_ref[0] 
     plugin_url = cull_ref[1]
     link = _load_plugin(plugin_name).plaster(payload, plugin_url)
@@ -140,10 +169,19 @@ def __main__():
     # if http not in link:  # go back to cull
     #     pass mark to cull
 
-def __test__():
+def __test__(): 
     log.info('test')
+    ###
+
+    #payload = stdin.read()
+    #style = detect_style(payload)
+    command = _relay_command(True)
+    best = _cull_plugin(command) 
+    print(best)
+
+
 
 
 if __name__ == "__main__":
-    __main__()
-    # __test__()
+     __main__()
+    #__test__()
