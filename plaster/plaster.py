@@ -35,9 +35,8 @@ def _read_config():
     '''Parse configuration file, from top to bottom.'''
     config = configparser.ConfigParser()
     config.read(config_file)
-    config_ref = config
     log.info('Configuration file read.')
-    return (config_ref)
+    return (config)
 
 def detect_style(payload):
     '''Test each payload in an attempt to clasify it.
@@ -72,13 +71,13 @@ def _relay_command(style):
         pass
     return command
 
-def _cull_plugin(command, mark): # add (run, mark) 
+def _cull_plugin(command, mark): 
     '''Choose the best plugin for the job.'''
-    global config_ref
-    run = len(config_ref.sections())
+    global config
+    run = len(config.sections())
     try:
         for mark in range(mark, run):
-            plugin_name = config_ref.sections()[mark]
+            plugin_name = config.sections()[mark]
             log.info(plugin_name)
             form = _load_plugin(plugin_name).format()
             diff = set(form.keys()) - set(command.keys())
@@ -114,7 +113,7 @@ def _load_plugin(plugin_name):
     return _plugin
 
 # add passwordeval
-#def passwordeval():
+# def passwordeval():
 #    gpg
 
 #
@@ -152,41 +151,49 @@ else:
 # main
 #
 
-def __main__():
+def plaster(payload):
     '''Plaster all the things!'''
-    payload = stdin.read()
     style = detect_style(payload)
     command = _relay_command(style)
-    global config_ref
-    config_ref = _read_config()
-    run = len(config_ref.sections()) + 1
+    global config
+    config = _read_config()
+    run = len(config.sections()) + 1
     attemps = '0'
     mark = 0
     for attemps in range(0, run):
         try:
             cull_ref = _cull_plugin(command, mark)
             plugin_name = cull_ref[0] 
-            url = config_ref[plugin_name]['url']
-            plugin_url = config_ref[plugin_name]['url']
-            link = _load_plugin(plugin_name).plaster(payload, plugin_url)
+            url = config[plugin_name]['url']
+            link = _load_plugin(plugin_name).post(payload, url).rstrip()
             if 'http' in link: # might be better to change to code 200
-                print(link)
                 break
         except:
             mark = mark + 1
             pass
     return link
 
+
+def __main__():
+    payload = stdin.read()
+    print('here')
+    link = plaster(payload)
+    print(link)
+
+
 def __test__(): 
     log.info('debug mode')
     ###
-    payload = 'debug this'
-    style = detect_style(payload)
-    command = _relay_command(style)
-    plugin_name = 'clbin_'
-    plugin_path = prefix + "/"  + plugin_name + ".py"
-    plugin_url = 'https://clbin.com'
-    link = _load_plugin(plugin_name).plaster(payload, plugin_url)
+    #import fileinput
+
+    #for payload in fileinput.input():
+    #    link = plaster(payload)
+    #    print(link)
+    
+    payload = stdin.read()
+    print(payload)
+    link = plaster(payload)
+    print(link)
 
 
 

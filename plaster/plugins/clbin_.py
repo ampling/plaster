@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-# Copyright (c) [2015-08-06], ISC, [Ampling <plaster@ampling.com>]
+# Copyright (c) [2015-08-06], ISC, [Ampling <post@ampling.com>]
 #
 ##############################################################################
 
@@ -18,7 +18,7 @@ def format():
     form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
     return form  
 
-def plaster(payload, url):
+def post(payload, url):
     '''alt plugin for clbin'''
     data = {'clbin': payload}
     r = requests.post(url, data)
