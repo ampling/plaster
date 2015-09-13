@@ -27,9 +27,8 @@ def post(payload, url):
     try:
         if OK is True:
             link = r.text
-            #print(r.text)
     except:
-        print('ops')
+        print('error')
         pass
     
     return link 

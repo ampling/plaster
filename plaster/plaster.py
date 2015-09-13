@@ -151,7 +151,7 @@ else:
 # main
 #
 
-def plaster(payload):
+def plaster(payload, style):
     '''Plaster all the things!'''
     style = detect_style(payload)
     command = _relay_command(style)
@@ -176,8 +176,8 @@ def plaster(payload):
 
 def __main__():
     payload = stdin.read()
-    print('here')
-    link = plaster(payload)
+    style = detect_style(payload)
+    link = plaster(payload, style)
     print(link)
 
 
@@ -190,9 +190,10 @@ def __test__():
     #    link = plaster(payload)
     #    print(link)
     
+    style = False
     payload = stdin.read()
     print(payload)
-    link = plaster(payload)
+    link = plaster(payload, style)
     print(link)
 
 
