@@ -38,21 +38,26 @@ def _read_config():
     log.info('Configuration file read.')
     return (config)
 
-def detect_style(payload):
+def detect_binary(payload):
     '''Test each payload in an attempt to clasify it.
     A simple heuristic based on file(1).
     If characters in payload resemble text return True. 
     If characters in payload resemble binary return False.'''
     txt = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - {0x7f})
     is_binary_string = lambda bytes: bool(bytes.translate(txt)) 
-    style = is_binary_string(payload)
-    return style
+    binary = is_binary_string(payload)
+    return binary
 
-def _relay_command(style):
+def _relay_command(binary):
     '''define local parameters'''
-    if style is True:
+    try:
+        if args.type:
+            binary = False
+    except:
+        pass
+    if binary is False:
         command = {'txt': 'yes'}
-    if style is False:
+    if binary is True:
         command = {'img': 'yes'}
     try:
         if args.login:
@@ -88,7 +93,7 @@ def _cull_plugin(command, mark):
             if len(sim) is not len(command):
                 log.info('skipped')
     except:
-        log.info('Attempting to adapt to connection error')
+        log.info('Adapting to connection error.')
         pass
     return (plugin_name, mark)
 
@@ -121,12 +126,16 @@ def _load_plugin(plugin_name):
 #
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-l", "--login", 
-        help="read login", action="store_true")
+parser.add_argument("-a", "--authenticate", 
+        help="use authentication set in config", action="store_true")
+parser.add_argument("-i", "--input", 
+        help="input file", action="store_true")
+parser.add_argument("-e", "--expire", 
+        help="set paste expiration time", action="store_true")
 parser.add_argument("-s", "--secure", 
-        help="secure tls", action="store_true")
-parser.add_argument("-t", "--time", 
-        help="time to expire", action="store_true")
+        help="use secure tls", action="store_true")
+parser.add_argument("-t", "--type", 
+        help="<text> or <image>", action="store_true")
 parser.add_argument("-v", "--verbose", 
         help="increase output verbosity", action="store_true")
 # parser.add_argument("-x", "--xclip", 
@@ -151,10 +160,10 @@ else:
 # main
 #
 
-def plaster(payload, style):
+def plaster(payload):
     '''Plaster all the things!'''
-    style = detect_style(payload)
-    command = _relay_command(style)
+    binary = detect_binary(payload)
+    command = _relay_command(binary)
     global config
     config = _read_config()
     run = len(config.sections()) + 1
@@ -176,8 +185,7 @@ def plaster(payload, style):
 
 def __main__():
     payload = stdin.read()
-    style = detect_style(payload)
-    link = plaster(payload, style)
+    link = plaster(payload)
     print(link)
 
 
@@ -190,10 +198,10 @@ def __test__():
     #    link = plaster(payload)
     #    print(link)
     
-    style = False
+    binary = True
     payload = stdin.read()
     print(payload)
-    link = plaster(payload, style)
+    link = plaster(payload, binary)
     print(link)
 
 
