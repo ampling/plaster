@@ -46,18 +46,8 @@ def _read_config():
     log.info('Configuration file read.')
     return (config)
 
-def bytes_scan(payload):
-    '''Test each payload in an attempt to clasify it.
-    A simple heuristic based on file(1).
-    If characters in payload resemble text return True. 
-    If characters in payload resemble binary return False.'''
-    txt = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - {0x7f})
-    is_binary_string = lambda bytes: bool(bytes.translate(txt)) 
-    binary = is_binary_string(payload)
-    return binary
-
 def null_scan(payload):
-    '''Is it text or not.'''
+    '''Is it binary or not.'''
     try:
         pattern = str("\0\0\0\0")
         if pattern in str(payload):
@@ -66,9 +56,10 @@ def null_scan(payload):
         if pattern not in str(payload):
             binary = True
             log.info('detect: binary')
-        return binary
     except:
+        log.error('scan error')
         pass
+    return binary
 
 def _relay_command(binary):
     '''Compose a dictionary to compare to each plugins' format.'''
@@ -76,9 +67,9 @@ def _relay_command(binary):
         if args.type:
              binary = False
              log.info('force image')
-        if binary is True:
-            command = {'txt': 'yes'}
         if binary is False:
+            command = {'txt': 'yes'}
+        if binary is True:
             command = {'img': 'yes'}
     except:
         pass
@@ -208,10 +199,8 @@ def __main__():
     payload = readin() 
     binary = null_scan(payload)
     command = _relay_command(binary)
-
     link = plaster(payload, command)
     print(link)
-
 
 def __test__(): 
     log.info('debug mode')
