@@ -10,7 +10,7 @@ import http.client
 
 def format():
     '''Availability'''
-    txt = 'no'
+    txt = 'yes'
     img = 'no'
     tls = 'no'
     time = 'no'

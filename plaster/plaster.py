@@ -38,8 +38,6 @@ def readin():
         pass
     return payload
 
-
-
 ## Use early, use sparingly.
 def _read_config():
     '''Parse configuration file, from top to bottom.'''
@@ -59,18 +57,21 @@ def bytes_scan(payload):
     return binary
 
 def null_scan(payload):
-    pattern = bool("\0\0\0\0")
-    for pattern in payload:
-        binary = True
-        log.info('detect: text')
-        break
-    if pattern not in payload:
-        binary = False
-        log.info('detect: binary')
-    return binary
-    
+    '''Is it text or not.'''
+    try:
+        pattern = str("\0\0\0\0")
+        if pattern in str(payload):
+            binary = False
+            log.info('detect: text')
+        if pattern not in str(payload):
+            binary = True
+            log.info('detect: binary')
+        return binary
+    except:
+        pass
+
 def _relay_command(binary):
-    '''define local parameters'''
+    '''Compose a dictionary to compare to each plugins' format.'''
     try:
         if args.type:
              binary = False
@@ -82,18 +83,18 @@ def _relay_command(binary):
     except:
         pass
     try:
-        if args.login:
+        if args.authenticate:
             command.update({'nick': 'yes'})
-            log.info('login')
+            log.info('authentication')
         if args.secure:
             command.update({'tls': 'yes'})
             log.info('secure')
         if args.secure:
             command.update({'tls': 'yes'})
-            log.info('secure')
-        if args.time:
+            log.info('tls enabled')
+        if args.expire:
             command.update({'time': 'yes'})
-            log.info('time') 
+            log.info('time enabled') 
     except:
         pass
     return command
@@ -186,7 +187,7 @@ def plaster(payload, command):
     '''Plaster all the things!'''
     global config
     config = _read_config()
-    run = len(config.sections()) + 1
+    run = len(config.sections())
     attemps = '0'
     mark = 0
     for attemps in range(0, run):
