@@ -30,6 +30,16 @@ config_file = config_dir + 'config'
 # BEGIN helper funtions 
 #
 
+def readin():
+    try:
+        payload = stdin.read()
+    except:
+        payload = stdin.buffer.read()
+        pass
+    return payload
+
+
+
 ## Use early, use sparingly.
 def _read_config():
     '''Parse configuration file, from top to bottom.'''
@@ -38,7 +48,7 @@ def _read_config():
     log.info('Configuration file read.')
     return (config)
 
-def detect_binary(payload):
+def bytes_scan(payload):
     '''Test each payload in an attempt to clasify it.
     A simple heuristic based on file(1).
     If characters in payload resemble text return True. 
@@ -48,17 +58,29 @@ def detect_binary(payload):
     binary = is_binary_string(payload)
     return binary
 
+def null_scan(payload):
+    pattern = bool("\0\0\0\0")
+    for pattern in payload:
+        binary = True
+        log.info('detect: text')
+        break
+    if pattern not in payload:
+        binary = False
+        log.info('detect: binary')
+    return binary
+    
 def _relay_command(binary):
     '''define local parameters'''
     try:
         if args.type:
-            binary = False
+             binary = False
+             log.info('force image')
+        if binary is True:
+            command = {'txt': 'yes'}
+        if binary is False:
+            command = {'img': 'yes'}
     except:
         pass
-    if binary is False:
-        command = {'txt': 'yes'}
-    if binary is True:
-        command = {'img': 'yes'}
     try:
         if args.login:
             command.update({'nick': 'yes'})
@@ -160,10 +182,8 @@ else:
 # main
 #
 
-def plaster(payload):
+def plaster(payload, command):
     '''Plaster all the things!'''
-    binary = detect_binary(payload)
-    command = _relay_command(binary)
     global config
     config = _read_config()
     run = len(config.sections()) + 1
@@ -184,8 +204,11 @@ def plaster(payload):
 
 
 def __main__():
-    payload = stdin.read()
-    link = plaster(payload)
+    payload = readin() 
+    binary = null_scan(payload)
+    command = _relay_command(binary)
+
+    link = plaster(payload, command)
     print(link)
 
 
@@ -198,15 +221,16 @@ def __test__():
     #    link = plaster(payload)
     #    print(link)
     
-    binary = True
-    payload = stdin.read()
-    print(payload)
-    link = plaster(payload, binary)
-    print(link)
+    payload = readin() 
+    binary = null_scan(payload)
+    command = _relay_command(binary)
+    
+    print(command) 
+    #link = plaster(payload, command)
+    #print(link)
 
 
 
 if __name__ == "__main__":
     __main__()
     # __test__()
-
