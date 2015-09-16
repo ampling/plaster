@@ -34,6 +34,7 @@ def readin():
     try:
         payload = stdin.read()
     except:
+        print('hhhh')
         payload = stdin.buffer.read()
         pass
     return payload
@@ -59,7 +60,7 @@ def is_binary(payload):
             log.info('detect: binary')
     except:
         log.error('unable to scan paste')
-        pass
+        raise
     return binary
 
 def _get_command(binary):
@@ -94,10 +95,7 @@ def _get_command(binary):
 def _cull(command, mark): 
     '''Choose the best plugin for the job.'''
     global config
-    log.info('start cull')
     sections = len(config.sections())
-    #if mark is not 0:
-    #    mark = mark + 1
     try:
         for mark in range(mark, sections):
             # name of plugin
@@ -118,7 +116,6 @@ def _cull(command, mark):
     except:
         log.info('adapting...')
         pass
-    log.info('leave cull')
     return (name, mark)
 
 def _fnmatch(name):
