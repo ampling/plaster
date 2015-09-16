@@ -33,11 +33,12 @@ config_file = config_dir + 'config'
 def readin():
     try:
         payload = stdin.read()
+        binary = False
     except:
-        print('hhhh')
         payload = stdin.buffer.read()
+        binary = True
         pass
-    return payload
+    return (payload, binary)
 
 ## Use early, use sparingly.
 def _read_config():
@@ -46,22 +47,6 @@ def _read_config():
     config.read(config_file)
     log.info('Configuration file read.')
     return (config)
-
-def is_binary(payload):
-    '''Is it binary or not.'''
-    try:
-        pattern = bool("\0\0\0\0")
-        for pattern in payload:
-            binary = False
-            log.info('detect: text')
-            break
-        if pattern not in payload:
-            binary = True
-            log.info('detect: binary')
-    except:
-        log.error('unable to scan paste')
-        raise
-    return binary
 
 def _get_command(binary):
     '''Compose a dictionary to compare to each plugins' format.'''
@@ -211,11 +196,11 @@ def plaster(payload, command):
 
 def __main__():
     payload = readin() 
-    binary = is_binary(payload)
+    binary = payload[1]
     command = _get_command(binary)
     try:
         '''send link to stdout'''
-        print(plaster(payload, command))
+        print(plaster(payload[0], command))
     except:
         log.error('unable to plaster')
         raise
@@ -225,9 +210,9 @@ def __test__():
     log.info('debug mode')
     ###
     payload = readin() 
-    binary = is_binary(payload)
-    command = _get_command(binary)
-    print(command) 
+    # global binary
+    # print(binary) 
+
 
 if __name__ == "__main__":
     __main__()
