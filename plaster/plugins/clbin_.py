@@ -29,6 +29,6 @@ def post(payload, url):
             link = r.text
     except:
         print('error')
-        pass
-    
-    return link 
+        raise
+    response = {'link': link, 'code': code} 
+    return response

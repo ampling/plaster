@@ -21,14 +21,11 @@ def format():
 def post(payload, url):
     '''alt plugin for ptpb'''
     data = {'ptpb=': payload}
-    try:
-        r = requests.post(url, data)
-        print(r.status_code, r.reason)
-        code = r.status_code
-        OK = r.status_code == requests.codes.ok
-        if OK is True:
-            print(r.text)
-    except:
-        print('ops')
-        pass
-
+    
+    r = requests.post(url, data)
+    # r.reason
+    code = r.status_code
+    OK = r.status_code == requests.codes.ok
+    link = r.text
+    response = {'link': link, 'code': code}
+    return response

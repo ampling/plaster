@@ -22,4 +22,6 @@ def post(payload, url):
     '''alt plugin for sprunge'''
     r = requests.post(url, data= str("sprunge=" + payload))
     link = r.text
-    return link
+    code = r.status_code
+    response = {'link': link, 'code': code}
+    return response

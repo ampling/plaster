@@ -18,10 +18,12 @@ def format():
     form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
     return form 
 
-def post(payload):
+def post(payload, url):
     '''plugin for sprunge'''
     conn = http.client.HTTPConnection(url)
     conn.request("POST", "/", data="sprunge=" + payload)
     resp = conn.getresponse()
-    print(resp.read())
-    #print(r.status_code, r.reason)
+    link = resp.read()
+    code = (r.status_code + r.reason)
+    response = {'link': link, 'code': code}
+    return response

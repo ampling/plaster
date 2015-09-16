@@ -23,6 +23,8 @@ def post(payload, url):
     conn = http.client.HTTPConnection("url")
     conn.request("POST", "/", "clbin=" + payload)
     resp = conn.getresponse()
-    print(resp.status, resp.reason)
-    print(resp.read())
+    code = print(resp.status, resp.reason)
+    link = resp.read()
+    response = {'link': link, 'code': code}
+    return response
 

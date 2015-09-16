@@ -23,5 +23,7 @@ def post():
     conn = http.client.HTTPSConnection(url)
     conn.request("POST", "/", "ptpb=" + payload)
     resp = conn.getresponse()
-    print(resp.status, resp.reason)
-    print(resp.read())
+    code = resp.status + resp.reason
+    link = resp.read())
+    response = {'link': link, 'code': code}
+    return response

@@ -182,17 +182,19 @@ def plaster(payload, command):
             mark = mark + 1 
             name = cull[0]
             url = config[name]['url']
-            link = _load(name).post(payload, url).rstrip()
+            response = _load(name).post(payload, url) 
+            link = str(response['link'])
+            code = str(response['code'])
             log.info('loading plugin...')
-            if 'http' in link: # might be better to change to code 200
+            if '200' in code: # might be better 200
                 break
             else:
-                log.info('another one bites the dust')
+                log.info(code)
         except:
             log.info('plaster adapting...')
             mark = mark + 1
-            pass
-    return link
+            raise
+    return response
 
 def __main__():
     payload = readin() 
@@ -200,7 +202,13 @@ def __main__():
     command = _get_command(binary)
     try:
         '''send link to stdout'''
-        print(plaster(payload[0], command))
+        response = plaster(payload[0], command)
+        link = response['link'].rstrip()
+        code = str(response['code'])
+        if '200' in code:
+            print(link)
+        else:
+            print('error code:', code)
     except:
         log.error('unable to plaster')
         raise
@@ -209,9 +217,21 @@ def __main__():
 def __test__(): 
     log.info('debug mode')
     ###
-    payload = readin() 
-    # global binary
-    # print(binary) 
+    payload = 'test'
+    binary = False
+    command = _get_command(binary)
+    try:
+        '''send link to stdout'''
+        response = _load('sprunge_').post(payload, 'http://sprunge.us')
+        link = response['link'].rstrip()
+        code = str(response['code'])
+        if '200' in code:
+            print(link)
+        else:
+            print('error code:', code)
+    except:
+        log.error('unable to plaster')
+        raise
 
 
 if __name__ == "__main__":
