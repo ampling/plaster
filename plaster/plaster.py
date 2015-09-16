@@ -46,27 +46,28 @@ def _read_config():
     log.info('Configuration file read.')
     return (config)
 
-def null_scan(payload):
+def is_binary(payload):
     '''Is it binary or not.'''
     try:
-        pattern = str("\0\0\0\0")
-        if pattern in str(payload):
+        pattern = bool("\0\0\0\0")
+        for pattern in payload:
             binary = False
             log.info('detect: text')
-        if pattern not in str(payload):
+            break
+        if pattern not in payload:
             binary = True
             log.info('detect: binary')
     except:
-        log.error('scan error')
+        log.error('unable to scan paste')
         pass
     return binary
 
-def _relay_command(binary):
+def _get_command(binary):
     '''Compose a dictionary to compare to each plugins' format.'''
     try:
-        if args.type:
-             binary = False
-             log.info('force image')
+        # if args.type:
+        #      binary = False
+        #      log.info('force image')
         if binary is False:
             command = {'txt': 'yes'}
         if binary is True:
@@ -90,46 +91,61 @@ def _relay_command(binary):
         pass
     return command
 
-def _cull_plugin(command, mark): 
+def _cull(command, mark): 
     '''Choose the best plugin for the job.'''
     global config
-    run = len(config.sections())
+    log.info('start cull')
+    sections = len(config.sections())
+    #if mark is not 0:
+    #    mark = mark + 1
     try:
-        for mark in range(mark, run):
-            plugin_name = config.sections()[mark]
-            log.info(plugin_name)
-            form = _load_plugin(plugin_name).format()
-            diff = set(form.keys()) - set(command.keys())
-            sim = set(command.items()) & set(form.items())
-            if len(sim) is len(command):
-                log.info('pluggin tests OK')
-                break
-            if len(sim) is not len(command):
-                log.info('skipped')
+        for mark in range(mark, sections):
+            # name of plugin
+            name = config.sections()[mark]
+            log.info(name)
+            match = _fnmatch(name)
+            if match is False:
+                log.info('adapting to match error')
+            if match is True:
+                form = _load(name).format()
+                diff = set(form.keys()) - set(command.keys())
+                sim = set(command.items()) & set(form.items())
+                if len(sim) is len(command):
+                    log.info('plugin checks out')
+                    break
+                if len(sim) is not len(command):
+                    log.info('skipped')
     except:
-        log.info('Adapting to connection error.')
+        log.info('adapting...')
         pass
-    return (plugin_name, mark)
+    log.info('leave cull')
+    return (name, mark)
 
-def _scout_dir(plugin_name):
-    '''Check plugins folder for desired plugin.'''
+def _fnmatch(name):
+    '''Check whether the plugins folder matches the desired plugin.'''
     list_plugins = glob(prefix + "/"  + "*.py")
-    plugin_path = prefix + "/" + plugin_name + ".py" 
-    if plugin_path not in list_plugins:
-        found = False
-        log.error('plugin error:', plugin_name, 'not found')
-    elif plugin_path in list_plugins:
-        found = True
-        log.info('scout successful')
-        return found 
+    plugin_path = prefix + "/" + name + ".py" 
+    if plugin_path in list_plugins:
+        match = True
+        log.info('plugin path confirmed')
+    else:
+        match = False
+        print('problem matching plugin', name)
+    return match 
 
-def _load_plugin(plugin_name):
-    '''Import a dynamic module'''
-    plugin_path = prefix + "/"  + plugin_name + ".py"
-    spec = SourceFileLoader(plugin_name, plugin_path)
-    _plugin = spec.load_module()
-    log.info('plugin loaded')
-    return _plugin
+def _load(name):
+    '''Import a module by name.'''
+    try:
+        plugin_path = prefix + "/"  + name + ".py"
+        spec = SourceFileLoader(name, plugin_path)
+        module = spec.load_module()
+        return module
+    except:
+        print('problem loading plugin', name)
+
+def _ping():
+    
+    return netstatus
 
 # add passwordeval
 # def passwordeval():
@@ -162,10 +178,6 @@ if args.verbose:
 else:
     log.basicConfig(format="%(levelname)s: %(message)s")
 
-# log.info("This should be verbose.")
-# log.warning("This is a warning.")
-# log.error("This is an error.")
-
 # if args.xclip:
 #     print('xclip')
 #     pyperclip.copy(link)
@@ -178,48 +190,47 @@ def plaster(payload, command):
     '''Plaster all the things!'''
     global config
     config = _read_config()
-    run = len(config.sections())
+    sections = len(config.sections())
     attemps = '0'
     mark = 0
-    for attemps in range(0, run):
+    for attemps in range(0, sections):
+        '''compensating for lame servers'''
         try:
-            cull_ref = _cull_plugin(command, mark)
-            plugin_name = cull_ref[0] 
-            url = config[plugin_name]['url']
-            link = _load_plugin(plugin_name).post(payload, url).rstrip()
+            cull = _cull(command, mark)
+            mark = mark + 1 
+            name = cull[0]
+            url = config[name]['url']
+            link = _load(name).post(payload, url).rstrip()
+            log.info('loading plugin...')
             if 'http' in link: # might be better to change to code 200
                 break
+            else:
+                log.info('another one bites the dust')
         except:
+            log.info('plaster adapting...')
             mark = mark + 1
             pass
     return link
 
-
 def __main__():
     payload = readin() 
-    binary = null_scan(payload)
-    command = _relay_command(binary)
-    link = plaster(payload, command)
-    print(link)
+    binary = is_binary(payload)
+    command = _get_command(binary)
+    try:
+        '''send link to stdout'''
+        print(plaster(payload, command))
+    except:
+        log.error('unable to plaster')
+        raise
+    
 
 def __test__(): 
     log.info('debug mode')
     ###
-    #import fileinput
-
-    #for payload in fileinput.input():
-    #    link = plaster(payload)
-    #    print(link)
-    
     payload = readin() 
-    binary = null_scan(payload)
-    command = _relay_command(binary)
-    
+    binary = is_binary(payload)
+    command = _get_command(binary)
     print(command) 
-    #link = plaster(payload, command)
-    #print(link)
-
-
 
 if __name__ == "__main__":
     __main__()
