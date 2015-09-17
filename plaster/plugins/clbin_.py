@@ -22,13 +22,8 @@ def post(payload, url):
     '''alt plugin for clbin'''
     data = {'clbin': payload}
     r = requests.post(url, data)
+    # r.reason
+    link = r.text
     code = r.status_code
-    OK = r.status_code == requests.codes.ok
-    try:
-        if OK is True:
-            link = r.text
-    except:
-        print('error')
-        raise
     response = {'link': link, 'code': code} 
     return response

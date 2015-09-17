@@ -34,6 +34,9 @@ def readin():
     try:
         payload = stdin.read()
         binary = False
+    except KeyboardInterrupt:
+        print('try:', 'plaster < example.txt' )
+        exit(1)
     except:
         payload = stdin.buffer.read()
         binary = True
@@ -124,6 +127,7 @@ def _load(name):
         return module
     except:
         print('problem loading plugin', name)
+        raise
 
 def _ping():
     

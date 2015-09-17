@@ -20,8 +20,7 @@ def format():
 
 def post(payload, url):
     '''alt plugin for ptpb'''
-    data = {'ptpb=': payload}
-    
+    data = {'ptpb': payload}
     r = requests.post(url, data)
     # r.reason
     code = r.status_code

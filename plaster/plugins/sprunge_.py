@@ -20,7 +20,9 @@ def format():
 
 def post(payload, url):
     '''alt plugin for sprunge'''
-    r = requests.post(url, data= str("sprunge=" + payload))
+    data = {'sprunge=': payload}
+    r = requests.post(url, data)
+    # r.reason
     link = r.text
     code = r.status_code
     response = {'link': link, 'code': code}
