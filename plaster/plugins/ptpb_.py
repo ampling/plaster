@@ -22,9 +22,9 @@ def post(payload, url):
     '''alt plugin for ptpb'''
     data = {'ptpb': payload}
     r = requests.post(url, data)
-    # r.reason
     code = r.status_code
     OK = r.status_code == requests.codes.ok
     link = r.text
-    response = {'link': link, 'code': code}
+    reason = r.reason
+    response = {'link': link, 'code': code, 'reason': reason}
     return response

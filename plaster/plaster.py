@@ -153,7 +153,7 @@ parser.add_argument("-s", "--secure",
 parser.add_argument("-t", "--type", 
         help="<text> or <image>", action="store_true")
 parser.add_argument("-v", "--verbose", 
-        help="increase output verbosity", action="store_true")
+        help="explain what is being done", action="store_true")
 # parser.add_argument("-x", "--xclip", 
 #         help="send link to clipboard", action="store_true")
 
@@ -197,7 +197,8 @@ def plaster(payload, command):
         except:
             log.info('plaster adapting...')
             mark = mark + 1
-            raise
+            # finds another
+            pass
     return response
 
 def __main__():
@@ -215,7 +216,7 @@ def __main__():
             print('error code:', code)
     except:
         log.error('unable to plaster')
-        raise
+        pass
     
 
 def __test__(): 

@@ -27,4 +27,3 @@ def post(payload, url):
     link = resp.read()
     response = {'link': link, 'code': code}
     return response
-

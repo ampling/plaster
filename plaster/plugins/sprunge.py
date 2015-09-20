@@ -25,5 +25,5 @@ def post(payload, url):
     resp = conn.getresponse()
     link = resp.read()
     code = (r.status_code + r.reason)
-    response = {'link': link, 'code': code}
+    response = {'link': link, 'code': code, 'reason': reason}
     return response
