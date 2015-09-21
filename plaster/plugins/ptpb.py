@@ -18,12 +18,12 @@ def format():
     form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
     return form 
 
-def post():
+def post(payload, url):
     '''plugin for ptpb'''
     conn = http.client.HTTPSConnection(url)
     conn.request("POST", "/", "c=" + payload)
     resp = conn.getresponse()
     code = resp.status + resp.reason
-    link = resp.read())
+    link = resp.read()
     response = {'link': link, 'code': code}
     return response

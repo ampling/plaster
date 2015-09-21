@@ -27,6 +27,37 @@ prefix = config_dir + 'plugins'
 config_file = config_dir + 'config'
 
 #
+# options
+#
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-a", "--authenticate", 
+        help="use authentication set in config", action="store_true")
+parser.add_argument("-i", "--input", 
+        help="input file", action="store_true")
+parser.add_argument("-e", "--expire", 
+        help="set paste expiration time", action="store_true")
+parser.add_argument("-s", "--secure", 
+        help="use secure tls", action="store_true")
+parser.add_argument("-t", "--type", 
+        help="<text> or <image>", action="store_true")
+parser.add_argument("-v", "--verbose", 
+        help="explain what is being done", action="store_true")
+# parser.add_argument("-x", "--xclip", 
+#         help="send link to clipboard", action="store_true")
+
+args = parser.parse_args()
+if args.verbose:
+    log.basicConfig(format="%(levelname)s: %(message)s", level=log.DEBUG)
+    log.info("Verbose output.")
+else:
+    log.basicConfig(format="%(levelname)s: %(message)s")
+
+# if args.xclip:
+#     print('xclip')
+#     pyperclip.copy(link)
+
+#
 # BEGIN helper funtions 
 #
 
@@ -49,7 +80,7 @@ def _read_config():
     try:
         config = configparser.ConfigParser()
         config.read(config_file)
-        log.info('Configuration file read.')
+        log.info('reading configuration file')
     except Exception as e:
             log.info(e)
     return (config)
@@ -100,7 +131,7 @@ def _cull(command, mark):
                 diff = set(form.keys()) - set(command.keys())
                 sim = set(command.items()) & set(form.items())
                 if len(sim) is len(command):
-                    log.info('plugin checks out')
+                    log.info('[OK] cull ')
                     break
                 if len(sim) is not len(command):
                     log.info('skipped')
@@ -116,7 +147,7 @@ def _fnmatch(name):
     plugin_path = prefix + "/" + name + ".py" 
     if plugin_path in list_plugins:
         match = True
-        log.info('plugin path confirmed')
+        log.info('[OK] fnmatch')
     else:
         match = False
         print('problem matching plugin', name)
@@ -134,51 +165,15 @@ def _load(name):
         print('problem loading plugin', name)
         raise
 
-def _ping():
-    
-    return netstatus
+def paste(name, payload):
+    '''send to net'''
+    url = config[name]['url']
+    response = _load(name).post(payload, url)
+    return response
 
-# add passwordeval
-# def passwordeval():
-#    gpg
 
-#
-# options
-#
-
-parser = argparse.ArgumentParser()
-parser.add_argument("-a", "--authenticate", 
-        help="use authentication set in config", action="store_true")
-parser.add_argument("-i", "--input", 
-        help="input file", action="store_true")
-parser.add_argument("-e", "--expire", 
-        help="set paste expiration time", action="store_true")
-parser.add_argument("-s", "--secure", 
-        help="use secure tls", action="store_true")
-parser.add_argument("-t", "--type", 
-        help="<text> or <image>", action="store_true")
-parser.add_argument("-v", "--verbose", 
-        help="explain what is being done", action="store_true")
-# parser.add_argument("-x", "--xclip", 
-#         help="send link to clipboard", action="store_true")
-
-args = parser.parse_args()
-if args.verbose:
-    log.basicConfig(format="%(levelname)s: %(message)s", level=log.DEBUG)
-    log.info("Verbose output.")
-else:
-    log.basicConfig(format="%(levelname)s: %(message)s")
-
-# if args.xclip:
-#     print('xclip')
-#     pyperclip.copy(link)
-
-#
-# main
-#
-
-def plaster(payload, command):
-    '''Plaster all the things!'''
+def plaster(command, payload):
+    '''Adapt to all the things!'''
     global config
     config = _read_config()
     sections = len(config.sections())
@@ -190,11 +185,10 @@ def plaster(payload, command):
             cull = _cull(command, mark)
             mark = mark + 1 
             name = cull[0]
-            url = config[name]['url']
-            response = _load(name).post(payload, url) 
+            ## paste
+            response = paste(name, payload)
             link = str(response['link'])
             code = str(response['code'])
-            log.info('loading plugin...')
             if '200' in code: # might be better 200
                 break
             else:
@@ -207,23 +201,37 @@ def plaster(payload, command):
             pass
     return response
 
+# add passwordeval
+# def passwordeval():
+#    gpg
+
+
+#
+# main
+#
+
+
 def __main__():
     payload = readin() 
     binary = payload[1]
     command = _get_command(binary)
     try:
         '''send link to stdout'''
-        response = plaster(payload[0], command)
-        link = response['link'].rstrip()
+        response = plaster(command, payload[0])
+        link = str(response['link'].rstrip())
         code = str(response['code'])
-        if '200' in code:
+        # reason = str(response['reason'])
+        if 'http' in link:
             print(str(link))
         else:
-            print('error code:', code)
+            log.info(str(link))
+            log.error('unable to plaster')
+            if not args.verbose:
+                print('to debug, try plaster -v')
     except Exception as e:
         log.info(e)
-        log.error('unable to plaster')
-        pass
+        log.error('all hope is lost')
+        raise
     
 
 def __test__(): 
@@ -232,17 +240,12 @@ def __test__():
     payload = 'test'
     binary = False
     command = _get_command(binary)
+    global config
+    config = _read_config()
     try:
         '''send link to stdout'''
-        print(payload)
-        response = _load('ptpb_curl').post(payload, 'https://ptpb.pw')
-        link = response['link'] #rstrip()
-        #link = response['link'].rstrip()
-        code = str(response['code'])
-        if 'html' in code:
-            print(link)
-        else:
-            print('error code:', code)
+        name = 'ptpb_curl'
+        print(paste(name, payload))
     except:
         log.error('unable to plaster')
         raise
@@ -250,4 +253,4 @@ def __test__():
 
 if __name__ == "__main__":
     __main__()
-    #__test__()
+    # __test__()
