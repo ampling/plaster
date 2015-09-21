@@ -46,9 +46,12 @@ def readin():
 ## Use early, use sparingly.
 def _read_config():
     '''Parse configuration file, from top to bottom.'''
-    config = configparser.ConfigParser()
-    config.read(config_file)
-    log.info('Configuration file read.')
+    try:
+        config = configparser.ConfigParser()
+        config.read(config_file)
+        log.info('Configuration file read.')
+    except Exception as e:
+            log.info(e)
     return (config)
 
 def _get_command(binary):
@@ -84,8 +87,8 @@ def _cull(command, mark):
     '''Choose the best plugin for the job.'''
     global config
     sections = len(config.sections())
-    try:
-        for mark in range(mark, sections):
+    for mark in range(mark, sections):
+        try:
             # name of plugin
             name = config.sections()[mark]
             log.info(name)
@@ -101,9 +104,10 @@ def _cull(command, mark):
                     break
                 if len(sim) is not len(command):
                     log.info('skipped')
-    except:
-        log.info('adapting...')
-        pass
+        except Exception as e:
+            log.info(e)
+            log.info('adapting...')
+            pass
     return (name, mark)
 
 def _fnmatch(name):
@@ -125,7 +129,8 @@ def _load(name):
         spec = SourceFileLoader(name, plugin_path)
         module = spec.load_module()
         return module
-    except:
+    except Exception as e:
+        log.info(e)
         print('problem loading plugin', name)
         raise
 
@@ -194,7 +199,8 @@ def plaster(payload, command):
                 break
             else:
                 log.info(code)
-        except:
+        except Exception as e:
+            log.info(e)
             log.info('plaster adapting...')
             mark = mark + 1
             # finds another
@@ -211,10 +217,11 @@ def __main__():
         link = response['link'].rstrip()
         code = str(response['code'])
         if '200' in code:
-            print(link)
+            print(str(link))
         else:
             print('error code:', code)
-    except:
+    except Exception as e:
+        log.info(e)
         log.error('unable to plaster')
         pass
     
@@ -227,10 +234,12 @@ def __test__():
     command = _get_command(binary)
     try:
         '''send link to stdout'''
-        response = _load('sprunge_').post(payload, 'http://sprunge.us')
-        link = response['link'].rstrip()
+        print(payload)
+        response = _load('ptpb_curl').post(payload, 'https://ptpb.pw')
+        link = response['link'] #rstrip()
+        #link = response['link'].rstrip()
         code = str(response['code'])
-        if '200' in code:
+        if 'html' in code:
             print(link)
         else:
             print('error code:', code)
@@ -241,4 +250,4 @@ def __test__():
 
 if __name__ == "__main__":
     __main__()
-    # __test__()
+    #__test__()

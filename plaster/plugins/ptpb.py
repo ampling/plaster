@@ -21,7 +21,7 @@ def format():
 def post():
     '''plugin for ptpb'''
     conn = http.client.HTTPSConnection(url)
-    conn.request("POST", "/", "ptpb=" + payload)
+    conn.request("POST", "/", "c=" + payload)
     resp = conn.getresponse()
     code = resp.status + resp.reason
     link = resp.read())

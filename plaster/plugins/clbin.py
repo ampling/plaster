@@ -20,10 +20,13 @@ def format():
 
 def post(payload, url):
     '''plugin for clbin'''
-    conn = http.client.HTTPConnection("url")
-    conn.request("POST", "/", "clbin=" + payload)
+    data = ('clbin=' + payload)
+    print(url)
+    conn = http.client.HTTPConnection(url)
+    conn.request("POST", "/", data)
+    #conn.request("POST", "/", "clbin=" + payload)
     resp = conn.getresponse()
-    code = print(resp.status, resp.reason)
+    code = resp.status + resp.reason
     link = resp.read()
     response = {'link': link, 'code': code}
     return response
