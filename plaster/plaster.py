@@ -62,6 +62,7 @@ else:
 #
 
 def readin():
+    '''Reads text or binary from stdin.'''
     try:
         payload = stdin.read()
         binary = False
@@ -82,8 +83,9 @@ def _read_config():
         config.read(config_file)
         log.info('reading configuration file')
     except Exception as e:
-            log.info(e)
-    return (config)
+            print(e)
+            raise
+    return config
 
 def _get_command(binary):
     '''Compose a dictionary to compare to each plugins' format.'''
@@ -110,7 +112,8 @@ def _get_command(binary):
         if args.expire:
             command.update({'time': 'yes'})
             log.info('time enabled') 
-    except:
+    except Exception as e:
+        log.info(e)
         pass
     return command
 
@@ -122,10 +125,13 @@ def _cull(command, mark):
         try:
             # name of plugin
             name = config.sections()[mark]
-            log.info(name)
+            if args.verbose:
+                print('##', name)
             match = _fnmatch(name)
             if match is False:
-                log.info('adapting to match error')
+                if args.verbose:
+                    print('*cull continues*')
+            
             if match is True:
                 form = _load(name).format()
                 diff = set(form.keys()) - set(command.keys())
@@ -135,9 +141,10 @@ def _cull(command, mark):
                     break
                 if len(sim) is not len(command):
                     log.info('skipped')
+                    name = None
         except Exception as e:
-            log.info(e)
-            log.info('adapting...')
+            if args.verbose:
+                print('BUG:', e)
             pass
     return (name, mark)
 
@@ -150,7 +157,9 @@ def _fnmatch(name):
         log.info('[OK] fnmatch')
     else:
         match = False
-        print('problem matching plugin', name)
+        if args.verbose:
+            print('WARNING: unable to match plugin:', name)
+            print(str('  try: ls'), prefix + "/")
     return match 
 
 def _load(name):
@@ -166,9 +175,14 @@ def _load(name):
         raise
 
 def paste(name, payload):
-    '''send to net'''
-    url = config[name]['url']
-    response = _load(name).post(payload, url)
+    '''send to bin'''
+    try:
+        global config
+        url = config[name]['url']
+        response = _load(name).post(payload, url)
+    except Exception as e:
+        log.info(e)
+        pass
     return response
 
 
@@ -176,26 +190,43 @@ def plaster(command, payload):
     '''Adapt to all the things!'''
     global config
     config = _read_config()
-    sections = len(config.sections())
-    attemps = '0'
+    sections = (len(config.sections())-1)
+    x = 0
     mark = 0
-    for attemps in range(0, sections):
-        '''compensating for lame servers'''
+    for x in range(0, sections):
+        '''compensating for downtime'''
         try:
+            if mark > sections:
+                if args.verbose:
+                    print('exit 2')
+                exit(1)
             cull = _cull(command, mark)
-            mark = mark + 1 
             name = cull[0]
-            ## paste
+            if name == None:
+                if args.verbose:
+                    print('exit 1')
+                exit(1)
+            mark = mark + 1
             response = paste(name, payload)
-            link = str(response['link'])
-            code = str(response['code'])
+            try:
+                reason = str(response['reason'])
+                link = str(response['link'])
+                code = str(response['code'])
+            except Exception as e:
+                if args.verbose:
+                    print('WARNING:', 'bad plugin:', name)
+                    print('  try reassigning variable', e)
+                    print('  $EDITOR',  prefix + "/" + name + ".py" )
+                continue
             if '200' in code: # might be better 200
                 break
-            else:
+            elif code is None:
                 log.info(code)
+            print('end')
         except Exception as e:
-            log.info(e)
-            log.info('plaster adapting...')
+            if args.verbose:
+                print('WARNING: 0', e)
+                print('*Plaster adapts*')
             mark = mark + 1
             # finds another
             pass
@@ -205,33 +236,32 @@ def plaster(command, payload):
 # def passwordeval():
 #    gpg
 
-
 #
 # main
 #
-
 
 def __main__():
     payload = readin() 
     binary = payload[1]
     command = _get_command(binary)
     try:
-        '''send link to stdout'''
+        '''send hyperlink to stdout'''
         response = plaster(command, payload[0])
-        link = str(response['link'].rstrip())
+        reason = str(response['reason'])
+        link = str(response['link'])
         code = str(response['code'])
-        # reason = str(response['reason'])
-        if 'http' in link:
+        if 'Connection' in reason:
+            log.error('network appears down')
+        elif 'http' in link:
             print(str(link))
         else:
-            log.info(str(link))
             log.error('unable to plaster')
             if not args.verbose:
                 print('to debug, try plaster -v')
     except Exception as e:
         log.info(e)
-        log.error('all hope is lost')
-        raise
+        log.error("abandon all hope")
+        pass
     
 
 def __test__(): 
@@ -244,11 +274,15 @@ def __test__():
     config = _read_config()
     try:
         '''send link to stdout'''
-        name = 'ptpb_curl'
-        print(paste(name, payload))
-    except:
-        log.error('unable to plaster')
-        raise
+        name = 'sprunge_requests'
+        response  = paste(name, payload)
+        reason = str(response['reason'])
+        if 'Connection' in reason:
+            print('connection error')
+        
+    except Exception as e:
+        print(e)
+        pass
 
 
 if __name__ == "__main__":

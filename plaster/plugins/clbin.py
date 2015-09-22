@@ -21,7 +21,6 @@ def format():
 def post(payload, url):
     '''plugin for clbin'''
     data = ('clbin=' + payload)
-    print(url)
     conn = http.client.HTTPConnection(url)
     conn.request("POST", "/", data)
     #conn.request("POST", "/", "clbin=" + payload)
