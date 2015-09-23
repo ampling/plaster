@@ -19,9 +19,9 @@ from glob import glob
 from sys import stdin
 from importlib.machinery import SourceFileLoader
 
-config_dir = path.expanduser("~") + '/' + '.config/plaster/'
-config_file = config_dir + 'config'
-prefix = config_dir + 'plugins'
+config_dir = path.join(path.expanduser('~'), '.config', 'plaster')
+config_file = path.join(config_dir, 'config')
+prefix = path.join(config_dir, 'plugins')
 
 #
 # options
@@ -79,10 +79,10 @@ def _config():
         config.read(config_file)
         if args.verbose:
             print('INFO: config:  [OK]')
+        return config
     except Exception as e: 
         print('ERROR: config:', e)
         raise
-    return config
 
 
 def _command(binary):
@@ -111,10 +111,10 @@ def _command(binary):
         #     command.update({'time': 'yes'})
         #     if args.verbose:
         #         print('ephemeral mode enabled') 
+        return command
     except Exception as e:
         if args.verbose:
             print('ERROR: command:', e)
-    return command
 
 def _cull(command, mark): 
     '''Choose the best plugin for the job.'''
@@ -129,7 +129,6 @@ def _cull(command, mark):
             if match is False:
                 if args.verbose:
                     print('*cull continues*')
-            print(name) 
             if match is True:
                 form = _load(name).formula()
                 diff = set(form.keys()) - set(command.keys())
@@ -149,8 +148,8 @@ def _cull(command, mark):
 
 def _fnmatch(name):
     '''Check whether the plugins folder matches the desired plugin.'''
-    list_plugins = glob(prefix + "/"  + "*.py")
-    plugin_path = prefix + "/" + name + ".py" 
+    list_plugins = glob(prefix + '/' + '*.py') # fix
+    plugin_path = path.join(prefix, '.'.join([name, 'py']))
     if plugin_path in list_plugins:
         match = True
         if args.verbose:
@@ -159,13 +158,13 @@ def _fnmatch(name):
         match = False
         if args.verbose:
             print('WARNING: unable to match plugin:', name)
-            print(str('  try: ls'), prefix + "/")
+            # print(str('  try: ls'), prefix + "/")
     return match 
 
 def _load(name):
     '''Import a module by name.'''
     try:
-        plugin_path = prefix + "/"  + name + ".py"
+        plugin_path = path.join(prefix, '.'.join([name, 'py']))
         spec = SourceFileLoader(name, plugin_path)
         module = spec.load_module()
         if args.verbose:
@@ -181,10 +180,10 @@ def paste(name, payload):
     try:
         url = config[name]['url']
         response = _load(name).post(payload, url)
+        return response
     except Exception as e:
         if args.verbose:
             print('WARNING: paste:', e)
-    return response
 
 
 def plaster(command, payload):
@@ -212,9 +211,7 @@ def plaster(command, payload):
                 code = str(response['code'])
             except Exception as e:
                 if args.verbose:
-                    print('WARNING:', 'bad plugin:', name)
-                    print('  try reassigning variable', e)
-                    print('  $EDITOR',  prefix + "/" + name + ".py" )
+                    print('WARNING:', 'plugin:', e) 
                 continue
             if '200' in code: 
                 break
@@ -246,19 +243,23 @@ def __main__():
     try:
         '''send hyperlink to stdout'''
         response = plaster(command, payload[0])
-        reason = str(response['reason'])
-        link = str(response['link'])
-        code = str(response['code'])
-        if 'Connection' in reason:
-            if args.verbose:
-                print('ERROR:', 'connection problem')
-        elif 'http' in link:
-            print(str(link))
+        if response is not None:
+            reason = str(response['reason'])
+            link = str(response['link'])
+            code = str(response['code'])
+            if 'Connection' in reason:
+                if args.verbose:
+                    print('ERROR:', 'connection problem')
+            elif 'http' in link:
+                print(str(link))
+            else:
+                if args.verbose:
+                    print('INFO:', 'unable to plaster')
+                if not args.verbose:
+                    print('to debug, try plaster -v')
         else:
             if args.verbose:
-                print('INFO:', 'unable to plaster')
-            if not args.verbose:
-                print('to debug, try plaster -v')
+                print('please fix plugin:')
     except Exception as e:
         if args.verbose:
             print("ERROR _main:", e)
