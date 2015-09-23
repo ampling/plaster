@@ -8,7 +8,7 @@
 import http.client
 
 
-def format():
+def formula():
     '''Availability'''
     txt = 'yes'
     img = 'no'

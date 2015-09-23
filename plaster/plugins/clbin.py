@@ -8,7 +8,7 @@
 import http.client
 #import ssl
 
-def format():
+def formula():
     '''Availability'''
     txt = 'yes'
     img = 'yes'
