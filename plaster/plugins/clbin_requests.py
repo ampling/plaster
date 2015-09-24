@@ -18,12 +18,16 @@ def formula():
     form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
     return form  
 
-def post(payload, url):
+def post(data, url):
     '''alt plugin for clbin'''
-    data = {'clbin': payload}
-    r = requests.post(url, data)
-    link = r.text
-    code = r.status_code
-    reason = r.reason
-    response = {'link': link, 'code': code, 'reason': reason} 
-    return response
+    try:
+        data = {'clbin': data}
+        r = requests.post(url, data)
+        link = r.text
+        code = r.status_code
+        reason = r.reason
+        response = {'link': link, 'code': code, 'reason': reason} 
+        return response
+    except Exception as e:
+        response = {'link': 'na', 'code': None, 'reason': e}
+        return response

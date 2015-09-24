@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*
 ##############################################################################
 #
 # Copyright (c) [2015-08-06], ISC, [Ampling <post@ampling.com>]
@@ -18,10 +18,10 @@ def formula():
     form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
     return form 
 
-def post(payload, url):
+def post(data, url):
     '''alt plugin for sprunge'''
     try:
-        data = ('sprunge=' + payload)
+        data = ('sprunge=' + data)
         r = requests.post(url, data)
         link = r.text.strip()
         code = r.status_code

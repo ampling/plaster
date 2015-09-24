@@ -18,12 +18,16 @@ def formula():
     form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
     return form 
 
-def post(payload, url):
+def post(data, url):
     '''plugin for ptpb'''
-    conn = http.client.HTTPSConnection(url)
-    conn.request("POST", "/", "c=" + payload)
-    resp = conn.getresponse()
-    code = resp.status + resp.reason
-    link = resp.read()
-    response = {'link': link, 'code': code}
-    return response
+    try:    
+        conn = http.client.HTTPSConnection(url)
+        conn.request("POST", "/", "c=" + data)
+        resp = conn.getresponse()
+        code = resp.status + resp.reason
+        link = resp.read()
+        response = {'link': link, 'code': code}
+        return response
+    except Exception as e:
+        response = {'link': 'na', 'code': None, 'reason': e}
+        return response

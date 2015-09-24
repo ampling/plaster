@@ -18,12 +18,16 @@ def formula():
     form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
     return form 
 
-def post(payload, url):
+def post(data, url):
     '''plugin for sprunge'''
-    conn = http.client.HTTPConnection(url)
-    conn.request("POST", "/", data="sprunge=" + payload)
-    resp = conn.getresponse()
-    link = resp.read()
-    code = (r.status_code + r.reason)
-    response = {'link': link, 'code': code, 'reason': reason}
-    return response
+    try:    
+        conn = http.client.HTTPConnection(url)
+        conn.request("POST", "/", data="sprunge=" + data)
+        resp = conn.getresponse()
+        link = resp.read()
+        code = (r.status_code + r.reason)
+        response = {'link': link, 'code': code, 'reason': reason}
+        return response
+    except Exception as e:
+        response = {'link': 'na', 'code': None, 'reason': e}
+        return response

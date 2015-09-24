@@ -18,13 +18,17 @@ def formula():
     form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
     return form 
 
-def post(payload, url):
+def post(data, url):
     '''alt plugin for ptpb'''
-    data = {'c=': payload}
-    r = requests.post(url, data)
-    code = r.status_code
-    OK = r.status_code == requests.codes.ok
-    link = r.text
-    reason = r.reason
-    response = {'link': link, 'code': code, 'reason': reason}
-    return response
+    try:
+        data = {'c=': data}
+        r = requests.post(url, data)
+        code = r.status_code
+        OK = r.status_code == requests.codes.ok
+        link = r.text
+        reason = r.reason
+        response = {'link': link, 'code': code, 'reason': reason}
+        return response
+    except Exception as e:
+        response = {'link': 'na', 'code': None, 'reason': e}
+        return response

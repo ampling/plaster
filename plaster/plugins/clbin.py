@@ -18,14 +18,18 @@ def formula():
     form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
     return form 
 
-def post(payload, url):
+def post(data, url):
     '''plugin for clbin'''
-    data = ('clbin=' + payload)
-    conn = http.client.HTTPConnection(url)
-    conn.request("POST", "/", data)
-    #conn.request("POST", "/", "clbin=" + payload)
-    resp = conn.getresponse()
-    code = resp.status + resp.reason
-    link = resp.read()
-    response = {'link': link, 'code': code}
-    return response
+    try:
+        data = ('clbin=' + data)
+        conn = http.client.HTTPConnection(url)
+        conn.request("POST", "/", data)
+        #conn.request("POST", "/", "clbin=" + data)
+        resp = conn.getresponse()
+        code = resp.status + resp.reason
+        link = resp.read()
+        response = {'link': link, 'code': code}
+        return response
+    except Exception as e:
+        response = {'link': 'na', 'code': None, 'reason': e}
+        return response
