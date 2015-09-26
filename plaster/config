@@ -1,0 +1,35 @@
+# -*- coding: utf-8 -*-
+#
+# plaster.rc
+#
+
+
+[ptpb_requests]
+url = https://ptpb.pw
+
+[sprunge_requests]
+url = http://sprunge.us
+
+[ptpb]
+url = https://ptpb.pw
+
+[clbin]
+url = https://clbin.com
+
+# [clbin_requests]
+# url = https://clbin.com
+
+[clbin_curl]
+url = https://clbin.com
+
+
+[ptpb_curl]
+url = https://ptpb.pw
+
+
+# [ampling]
+# login = ampling
+# passwordeval = passel server/account/pass
+
+# [DEFAULT]
+# uptime = 30

@@ -14,12 +14,13 @@ Plaster is an adaptable command-line pastebin client.
 
 import argparse
 import configparser
+import mimetypes
 from os import path
 from sys import stdin
 from importlib.machinery import SourceFileLoader
 
 config_dir = path.join(path.expanduser('~'), '.config', 'plaster')
-config_file = path.join(config_dir, 'plaster.rc')
+config_file = path.join(config_dir, 'config')
 prefix = path.join(config_dir, 'plugins')
 
 #
@@ -27,23 +28,23 @@ prefix = path.join(config_dir, 'plugins')
 #
 
 parser = argparse.ArgumentParser()
+parser.add_argument('infile', default='',
+        help='infile', nargs='?', type=str)
 # parser.add_argument("-a", "--authenticate", 
 #         help="use authentication set in config", action="store_true")
-parser.add_argument("-i", "--input", 
-        help="input file")
+parser.add_argument("-b", "--binary", 
+        help="set to True or False")
 parser.add_argument("-e", "--expire", 
         help="set paste expiration time")
 parser.add_argument("-s", "--secure", 
         help="use secure tls", action="store_true")
-parser.add_argument("-t", "--type", 
-        help="<text> or <image>")
 parser.add_argument("-v", "--verbose", 
         help="explain what is being done", action="count")
+
 # parser.add_argument("-x", "--xclip", 
 #         help="send link to clipboard", action="store_true")
 
 args = parser.parse_args()
-
 # if args.xclip:
 #     print('xclip')
 #     pyperclip.copy(link)
@@ -52,13 +53,13 @@ args = parser.parse_args()
 # BEGIN helper funtions 
 #
 
-def _readin():
+def _stdin():
     '''Reads text or binary from stdin.'''
     try:
         data = stdin.read()
         binary = False
         if args.verbose:
-            print('autodetect: text')
+            print('+text detected')
     except KeyboardInterrupt:
         print('try:', 'plaster < example.txt' )
         exit(1)
@@ -66,8 +67,42 @@ def _readin():
         data = stdin.buffer.read()
         binary = True
         if args.verbose:
-            print('autodetect: binary')
+            print('+binary detected')
     return (data, binary)
+
+def _infile():
+    buffersize = 100000 # change to var
+    infile = open(args.infile, 'rb')
+    outfile = open('/tmp/glue.pot', 'wb')
+    buffer = infile.read(buffersize)
+    while len(buffer):
+        outfile.write(buffer)
+        # print('.', end='')
+        buffer = infile.read(buffersize)
+        infile = buffer
+    return infile
+
+def _incopy():
+    pass
+
+def _guess(infile):
+    guess = mimetypes.guess_type(str(infile))
+    print(infile)
+    if 'text/plain' in guess:
+        print('text')
+        binary = False
+    elif 'image/png' in guess:
+        print('image')
+        binary = True
+
+    else:
+        print('unknown type =', guess)
+        print(guess)
+        binary = None
+    return binary
+
+
+
 
 ## Use early, use sparingly.
 
@@ -77,7 +112,7 @@ def _config():
         config = configparser.ConfigParser()
         config.read(config_file)
         if config.sections() == []:
-            print('please fix plaster.rc')
+            print(config_file, 'appears empty')
             exit(1)
         if args.verbose:
             print('INFO: config:  [PASS]')
@@ -85,16 +120,11 @@ def _config():
     except Exception as e: 
         if args.verbose:
             print('ERROR: config:', e)
-        raise
 
 
 def _command(binary):
     '''Compose a dictionary to compare to each plugins' formula.'''
     try:
-        if args.type:
-            binary = False
-            if args.verbose:
-                print('text mode [ON]')
         if binary is False:
             command = {'txt': 'yes'}
         if binary is True:
@@ -137,7 +167,7 @@ def _cull(command, mark):
             sim = set(command.items()) & set(form.items())
             if len(sim) is len(command):
                 if args.verbose:
-                    print('INFO:', 'cull     [PASS]')
+                    print('INFO:', 'cull    ', '[PASS]')
                 break
             if len(sim) is not len(command):
                 if args.verbose:
@@ -230,13 +260,30 @@ def plaster(command, data):
 config = _config()
 
 def __main__():
-    data = _readin() 
-    binary = data[1]
+    if args.infile:
+        data = _infile()
+        if args.verbose:
+            print('infile mode [ON]')
+    ##_xcopyin
+    if not args.infile:  # or _xcopyin
+        sdata = _stdin()
+        binary = sdata[1]
+        data = sdata[0]
+    
+    if not args.binary:
+        # binary = _guess(infile)
+        pass
+    if args.binary == 'True':
+        binary = True
+    if args.binary == 'False':
+        print('caths')
+        binary = False
     command = _command(binary)
+    print(command) 
     try:
         '''send hyperlink to stdout'''
         reason = None
-        response = plaster(command, data[0])
+        response = plaster(command, data)
         link = str(response['link'])
         code = str(response['code'])
         if reason != None:    
@@ -259,21 +306,33 @@ def __main__():
 def __test__(): 
     print('debug mode [ON]')
     ###
-    data = 'test'
-    binary = False
+    
+    infile = _infile()
+    binary = _guess(infile)
+    
+    if not args.binary:
+        print('not')
+        binary = _guess(infile)
+    if args.binary == True:
+        binary = True
+    if args.binary == False:
+        binary = False
+    """ 
     command = _command(binary)
-    print(config)
+    print(command)
     try:
         '''send link to stdout'''
-        _load('sprunge_requests').formula()
-        #name = 'sprunge_requests'
-        #response  = paste(name, data)
-        #reason = str(response['reason'])
-        #print(response['link'])
+        #_load('clbin_requests').formula()
+        name = 'sprunge_requests'
+        response  = paste(name, infile)
+        reason = str(response['reason'])
+        print('link =', response['link'])
         #if 'Connection' in reason: print('connection error')
+    
     except Exception as e:
         print('ERROR: text:', e)
-
+    
+    """
 if __name__ == "__main__":
     __main__()
     ## __test__()
