@@ -18,12 +18,12 @@ def formula():
     form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
     return form 
 
-def post(data, url):
+def post(url, data):
     '''alt plugin for sprunge'''
     try:
-        data = ('sprunge=' + data)
-        r = requests.post(url, data)
-        link = r.text.strip()
+        p = {'sprunge=' + data]
+        r = requests.post(url, p)
+        link = r.content.strip()
         code = r.status_code
         reason = r.reason
         response = {'link': link, 'code': code, 'reason': reason}

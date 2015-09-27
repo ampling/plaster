@@ -18,7 +18,7 @@ def formula():
     form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
     return form 
 
-def post(data, url):
+def post(url, data):
     '''plugin for clbin'''
     try:
         data = ('clbin=' + data)

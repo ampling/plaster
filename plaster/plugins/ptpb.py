@@ -6,7 +6,7 @@
 ##############################################################################
 
 import http.client
-#import ssl
+import ssl
 
 def formula():
     '''Availability'''
@@ -18,16 +18,21 @@ def formula():
     form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
     return form 
 
-def post(data, url):
+def post(url, data):
     '''plugin for ptpb'''
     try:    
+        
+        print('.')
         conn = http.client.HTTPSConnection(url)
-        conn.request("POST", "/", "c=" + data)
+        conn.request("POST", "/", data)
+        print('cats')
         resp = conn.getresponse()
-        code = resp.status + resp.reason
+        # code = resp.status + resp.reason
         link = resp.read()
-        response = {'link': link, 'code': code}
+        print(link)
+        # response = {'link': link}
         return response
     except Exception as e:
+        raise
         response = {'link': 'na', 'code': None, 'reason': e}
         return response

@@ -71,16 +71,16 @@ def _stdin():
     return (data, binary)
 
 def _infile():
-    buffersize = 100000 # change to var
-    infile = open(args.infile, 'rb')
-    outfile = open('/tmp/glue.pot', 'wb')
+    buffersize = 200000 # change to var
+    infile = open(str(args.infile), 'rb')
+    outfile = open('/tmp/plastered', 'wb')
     buffer = infile.read(buffersize)
     while len(buffer):
         outfile.write(buffer)
-        # print('.', end='')
+        print('.', end='')
         buffer = infile.read(buffersize)
-        infile = buffer
-    return infile
+    brick = str('/tmp/plastered')
+    return brick
 
 def _incopy():
     pass
@@ -192,11 +192,11 @@ def _load(name):
         if args.verbose == 2:
             print('ERROR: load:', e)
 
-def paste(name, data):
+def paste(name, url, data):
     '''send to bin'''
     try:
-        url = config[name]['url']
-        response = _load(name).post(data, url)
+        # url = config[name]['url']
+        response = _load(name).post(url, data)
         if args.verbose == 2:
             print('INFO:','paste   ', '[PASS]')
         return response
@@ -223,7 +223,8 @@ def plaster(command, data):
                     print('end of list')
                 exit(1)
             mark = mark + 1
-            response = paste(name, data)
+            url = config[name]['url']
+            response = paste(name, url, data)
             try:
                 reason = str(response['reason'])
                 link = str(response['link'])
@@ -276,16 +277,15 @@ def __main__():
     if args.binary == 'True':
         binary = True
     if args.binary == 'False':
-        print('caths')
         binary = False
     command = _command(binary)
-    print(command) 
     try:
         '''send hyperlink to stdout'''
         reason = None
+        # data = args.infile
         response = plaster(command, data)
         link = str(response['link'])
-        code = str(response['code'])
+        # code = str(response['code'])
         if reason != None:    
             reason = str(response['reason'])
             if 'Connection' in reason:
@@ -307,32 +307,22 @@ def __test__():
     print('debug mode [ON]')
     ###
     
-    infile = _infile()
-    binary = _guess(infile)
-    
-    if not args.binary:
-        print('not')
-        binary = _guess(infile)
-    if args.binary == True:
-        binary = True
-    if args.binary == False:
-        binary = False
-    """ 
-    command = _command(binary)
-    print(command)
     try:
         '''send link to stdout'''
-        #_load('clbin_requests').formula()
-        name = 'sprunge_requests'
-        response  = paste(name, infile)
-        reason = str(response['reason'])
-        print('link =', response['link'])
-        #if 'Connection' in reason: print('connection error')
+        name = 'ptpb_requests'
+        url = 'https://ptpb.pw'
+        payload = _infile()
+        print(payload)
+        response  = paste(name, url, payload)
+        print(response)
+        # print('link =', response['link'])
+        # if 'Connection' in reason: print('connection error')
     
     except Exception as e:
-        print('ERROR: text:', e)
+        raise
+        print('ERROR: test:', e)
     
-    """
+    
 if __name__ == "__main__":
     __main__()
-    ## __test__()
+    # __test__()
