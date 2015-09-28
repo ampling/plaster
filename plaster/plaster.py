@@ -77,7 +77,7 @@ def _infile():
     buffer = infile.read(buffersize)
     while len(buffer):
         outfile.write(buffer)
-        print('.', end='')
+        # print('.', end='')
         buffer = infile.read(buffersize)
     brick = str('/tmp/plastered')
     return brick
@@ -94,15 +94,11 @@ def _guess(infile):
     elif 'image/png' in guess:
         print('image')
         binary = True
-
     else:
         print('unknown type =', guess)
         print(guess)
         binary = None
     return binary
-
-
-
 
 ## Use early, use sparingly.
 
@@ -115,12 +111,11 @@ def _config():
             print(config_file, 'appears empty')
             exit(1)
         if args.verbose:
-            print('INFO: config:  [PASS]')
+            print('INFO: config:    [PASS]')
         return config
     except Exception as e: 
         if args.verbose:
             print('ERROR: config:', e)
-
 
 def _command(binary):
     '''Compose a dictionary to compare to each plugins' formula.'''
@@ -156,22 +151,28 @@ def _cull(command, mark):
         try:
             name = config.sections()[mark]
             if args.verbose:
-                print('>>>', name)
+                print('>>', name)
+            if args.verbose == 2:
+                print(mark + 1, '/', sections)
             form = _load(name).formula()
+            ## here 
         except Exception as e:
+            name = 'null'
             if args.verbose:
-                print('INFO:', 'load    ', '[FAIL]')
+                print('WARNING: cull   ', '[FAIL]')
+            if args.verbose == 2:
+                print('e:', e)
             continue
         try:  
             diff = set(form.keys()) - set(command.keys())
             sim = set(command.items()) & set(form.items())
             if len(sim) is len(command):
                 if args.verbose:
-                    print('INFO:', 'cull    ', '[PASS]')
+                    print('INFO:', 'cull      ', '[PASS]')
                 break
             if len(sim) is not len(command):
                 if args.verbose:
-                    print('INFO:', 'cull    ', '[FAIL]')
+                    print('INFO:', 'cull      ', '[FAIL]')
                 name = None
                 continue
         except Exception as e:
@@ -184,13 +185,14 @@ def _load(name):
     try:
         plugin_path = path.join(prefix, '.'.join([name, 'py']))
         spec = SourceFileLoader(name, plugin_path)
+        # errors here
         module = spec.load_module()
         if args.verbose == 2:
-            print('INFO:', 'load    ', '[PASS]')
+            print('INFO:', 'load      ', '[PASS]')
         return module
     except Exception as e:
         if args.verbose == 2:
-            print('ERROR: load:', e)
+            print('e:', e)
 
 def paste(name, url, data):
     '''send to bin'''
@@ -198,57 +200,55 @@ def paste(name, url, data):
         # url = config[name]['url']
         response = _load(name).post(url, data)
         if args.verbose == 2:
-            print('INFO:','paste   ', '[PASS]')
+            print('INFO:','paste     ', '[PASS]')
         return response
     except Exception as e:
+        if args.verbose:
+            print('WARNING: paste   [FAIL]')
         if args.verbose == 2:
-            print('ERROR: paste:', e)
+            print('e:', e)
 
 
 def plaster(command, data):
     '''Adapt to all the things!'''
-    sections = (len(config.sections()))
-    i, mark = 0, 0  
-    for i in range(sections):
+    sections = (len(config.sections()) - 1)
+    i, mark = 1, 0
+    for i in range(1, sections):
         '''compensating for downtime'''
         try:
-            if mark > sections:
-                if args.verbose:
-                    print('EOL')
-                exit(1)
+            # if args.verbose == 2:
+            #     print('p:', mark + 1,'/',sections)
+            ### action
             cull = _cull(command, mark)
             name = cull[0]
-            if name == None:
-                if args.verbose:
-                    print('end of list')
-                exit(1)
-            mark = mark + 1
+            mark = cull[1] + 1
+            i = cull[1] + 1
             url = config[name]['url']
             response = paste(name, url, data)
             try:
-                reason = str(response['reason'])
                 link = str(response['link'])
-                code = str(response['code'])
             except Exception as e:
                 if args.verbose:
-                    print('WARNING:', 'plugin:', e) 
+                    print('WARNING: plugin  [FAIL]')
+                if args.verbose == 2:
+                    print('e:', e) 
                 continue
-            if '200' in code: 
+            if 'http' in link: 
                 break
-            elif code is None:
+            if mark <= sections:
                 if args.verbose:
-                    print('INFO:', code)
-            if args.verbose:
-                print('INFO:','         [FAIL]')
+                    print('>', end='')
         except Exception as e:
+            response = 'null'
+            if args.verbose:
+                print('WARNING: plaster [FAIL]')
             if args.verbose == 2:
-                print('WARNING: plaster:', e)
-            if args.verbose:    
-                print('*plaster adapts*')
+                print('e:', e)
             mark = mark + 1
-            ## plaster finds another plugin
+            i = i + 1
+            '''plaster finds another plugin'''
+            continue
     return response
-
 
 # add passwordeval
 # def passwordeval():
@@ -270,34 +270,40 @@ def __main__():
         sdata = _stdin()
         binary = sdata[1]
         data = sdata[0]
-    
     if not args.binary:
         # binary = _guess(infile)
         pass
-    if args.binary == 'True':
-        binary = True
-    if args.binary == 'False':
-        binary = False
+    binary = args.binary == 'True'
     command = _command(binary)
     try:
-        '''send hyperlink to stdout'''
-        reason = None
+        '''sends hyperlink to stdout'''
+        response = 'null'
         # data = args.infile
         response = plaster(command, data)
-        link = str(response['link'])
-        # code = str(response['code'])
-        if reason != None:    
-            reason = str(response['reason'])
-            if 'Connection' in reason:
-                if args.verbose:
-                    print('ERROR:', 'connection problem')
-        elif 'http' in link:
-            print(str(link).rstrip())
-        else:
+        if response is 'null':
             if args.verbose:
-                print('ERROR:', 'main', '   [FAIL]')
-            if not args.verbose:
-                print('to debug, try plaster -v')
+                print('done')
+            exit(1)
+        link = 'null'
+        link = str(response['link'])
+        
+        try:
+            if args.verbose == 2:
+                print('INFO: main       [PASS]')
+            if link != 'null' and 'http' in link:
+                print(str(link).rstrip())
+            #if  str(response['reason']) 
+            #    reason = str(response['reason'])
+            #if 'Connection' in reason:
+            #    if args.verbose:
+            #        print('ERROR:', 'connection problem')
+        except:
+            pass
+        #else:
+        #    if args.verbose:
+        #        print('ERROR:', 'main ', '   [FAIL]')
+        #    if not args.verbose:
+        #        print('to debug, try plaster -v')
     except Exception as e:
         if args.verbose == 2:
             print("ERROR: main:", e)
@@ -306,7 +312,6 @@ def __main__():
 def __test__(): 
     print('debug mode [ON]')
     ###
-    
     try:
         '''send link to stdout'''
         name = 'ptpb_requests'

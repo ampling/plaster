@@ -21,18 +21,13 @@ def formula():
 def post(url, data):
     '''plugin for ptpb'''
     try:    
-        
-        print('.')
         conn = http.client.HTTPSConnection(url)
         conn.request("POST", "/", data)
-        print('cats')
         resp = conn.getresponse()
         # code = resp.status + resp.reason
         link = resp.read()
-        print(link)
-        # response = {'link': link}
+        response = {'link': link}
         return response
     except Exception as e:
-        raise
         response = {'link': 'na', 'code': None, 'reason': e}
         return response

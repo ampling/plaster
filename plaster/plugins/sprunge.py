@@ -33,7 +33,7 @@ def post(url, data):
         print(response)
         return response
     except Exception as e:
-        raise
+        # raise
         response = {'link': 'na', 'code': None, 'reason': e}
         return response
 

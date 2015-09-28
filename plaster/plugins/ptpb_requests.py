@@ -22,15 +22,11 @@ def post(url, data):
     '''alt plugin for ptpb'''
     try:
         # r = requests.post(url, files={'file': open(data,'rb')})
-        print(url)
-        print(data)
         brick = {'c': open(data, 'rb')}
         r = requests.post(url, files=brick)
-        print(r)
         # code = r.status_code
         # OK = r.status_code == requests.codes.ok
         link = r.content
-        print('cats')
         response = {'link': link} # 'code': code, 'reason': reason}
         return response
     except Exception as e:
