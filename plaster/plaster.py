@@ -16,8 +16,12 @@ import argparse
 import configparser
 import mimetypes
 from os import path
-from sys import stdin
+from sys import stdin, stdout
 from importlib.machinery import SourceFileLoader
+
+import magic
+
+version = '0.042'
 
 config_dir = path.join(path.expanduser('~'), '.config', 'plaster')
 config_file = path.join(config_dir, 'config')
@@ -27,19 +31,19 @@ prefix = path.join(config_dir, 'plugins')
 # options
 #
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(description='plaster v{}'.format(version))
 parser.add_argument('infile', default='',
-        help='infile', nargs='?', type=str)
+        help='select a file', nargs='?', type=str)
 # parser.add_argument("-a", "--authenticate", 
 #         help="use authentication set in config", action="store_true")
-parser.add_argument("-b", "--binary", 
-        help="set to True or False")
-parser.add_argument("-e", "--expire", 
-        help="set paste expiration time")
+parser.add_argument("-b", "--binary", nargs='?', default=False, type=bool, 
+        help="bypass autodetect; set content as image: True or False")
+parser.add_argument("-e", "--expire", nargs='?', default=1, type=int,
+        help="time to expire")
 parser.add_argument("-s", "--secure", 
-        help="use secure tls", action="store_true")
+        help="use only https", action="store_true")
 parser.add_argument("-v", "--verbose", 
-        help="explain what is being done", action="count")
+        help="increase verbosity", action="count")
 
 # parser.add_argument("-x", "--xclip", 
 #         help="send link to clipboard", action="store_true")
@@ -56,51 +60,57 @@ args = parser.parse_args()
 def _stdin():
     '''Reads text or binary from stdin.'''
     try:
-        data = stdin.read()
+        entry = stdin.read()
         binary = False
         if args.verbose:
             print('+text detected')
+        with open('/tmp/plasti', 'w') as f:
+            f.write(entry)
+        entry = str('/tmp/plasti')
     except KeyboardInterrupt:
         print('try:', 'plaster < example.txt' )
         exit(1)
     except Exception as e:
-        data = stdin.buffer.read()
+        print('feature coming soon')
+        exit(1)
+        '''
+        buffersize = 100000
+        f = stdin.buffer.read()
+        infile = open(str(f), 'rb')
+        outfile = open('/tmp/plasti', 'wb')
+        buffer = infile.read(buffersize)
+        while len(buffer):
+            outfile.write(buffer)
+            buffer = infile.read(buffersize)
+        entry = str('/tmp/plasti')
+        '''
+
         binary = True
-        if args.verbose:
-            print('+binary detected')
-    return (data, binary)
+        entry = stdin.buffer.read() 
+        out = stdout.buffer.write(entry)
+        with open('/tmp/plasti', 'wb') as f:
+            f.write(entry)
+            
+    return (entry, binary)
 
 def _infile():
-    buffersize = 200000 # change to var
+    buffersize = 100000 # change to var
     infile = open(str(args.infile), 'rb')
-    outfile = open('/tmp/plastered', 'wb')
+    outfile = open('/tmp/plasti', 'wb')
     buffer = infile.read(buffersize)
     while len(buffer):
         outfile.write(buffer)
-        # print('.', end='')
         buffer = infile.read(buffersize)
-    brick = str('/tmp/plastered')
-    return brick
+    entry = str('/tmp/plasti')
+    return entry
 
 def _incopy():
     pass
 
-def _guess(infile):
-    guess = mimetypes.guess_type(str(infile))
-    print(infile)
-    if 'text/plain' in guess:
-        print('text')
-        binary = False
-    elif 'image/png' in guess:
-        print('image')
-        binary = True
-    else:
-        print('unknown type =', guess)
-        print(guess)
-        binary = None
-    return binary
+def _sniff(infile):
+    sniff = magic.from_file('/tmp/new.png')
+    print(sniff)   
 
-## Use early, use sparingly.
 
 def _config():
     '''Parse configuration file, from top to bottom.'''
@@ -118,7 +128,7 @@ def _config():
             print('ERROR: config:', e)
 
 def _command(binary):
-    '''Compose a dictionary to compare to each plugins' formula.'''
+    '''Compose a dictionary to match specified parameters.'''
     try:
         if binary is False:
             command = {'txt': 'yes'}
@@ -151,9 +161,9 @@ def _cull(command, mark):
         try:
             name = config.sections()[mark]
             if args.verbose:
-                print('>>', name)
-            if args.verbose == 2:
-                print(mark + 1, '/', sections)
+                print(mark + 1, '/', sections, ' >>', name)
+            # if args.verbose == 2:
+            #     print(mark + 1, '/', sections)
             form = _load(name).formula()
             ## here 
         except Exception as e:
@@ -195,7 +205,11 @@ def _load(name):
             print('e:', e)
 
 def paste(name, url, data):
-    '''send to bin'''
+    '''
+    Sends data to specified pastebin.
+    example: paste('clbin', 'https://clbin.com', 'Hello, World!')
+    The return value is a dicionary {'link': 'https://clbin.com'}
+    '''
     try:
         # url = config[name]['url']
         response = _load(name).post(url, data)
@@ -210,15 +224,16 @@ def paste(name, url, data):
 
 
 def plaster(command, data):
-    '''Adapt to all the things!'''
+    '''
+    Compensates for ineffective pastebins.
+    example: plaster({'txt': 'yes'}, "Hello, World!") 
+    The return value is a dicionary {'link': 'https://clbin.com'}
+    '''
     sections = (len(config.sections()) - 1)
     i, mark = 1, 0
     for i in range(1, sections):
-        '''compensating for downtime'''
+        ## i & mark should work in unison.
         try:
-            # if args.verbose == 2:
-            #     print('p:', mark + 1,'/',sections)
-            ### action
             cull = _cull(command, mark)
             name = cull[0]
             mark = cull[1] + 1
@@ -236,17 +251,17 @@ def plaster(command, data):
             if 'http' in link: 
                 break
             if mark <= sections:
-                if args.verbose:
-                    print('>', end='')
+                if args.verbose == 2:
+                    print('####')
+            '''plaster finds another plugin'''
         except Exception as e:
             response = 'null'
+            mark = mark + 1
+            i = i + 1
             if args.verbose:
                 print('WARNING: plaster [FAIL]')
             if args.verbose == 2:
                 print('e:', e)
-            mark = mark + 1
-            i = i + 1
-            '''plaster finds another plugin'''
             continue
     return response
 
@@ -267,12 +282,12 @@ def __main__():
             print('infile mode [ON]')
     ##_xcopyin
     if not args.infile:  # or _xcopyin
-        sdata = _stdin()
-        binary = sdata[1]
-        data = sdata[0]
-    if not args.binary:
-        # binary = _guess(infile)
-        pass
+        print('cats') 
+        data = _stdin()
+        payload = data[0]
+        binary = data[1]
+    if args.infile:
+        binary = _sniff(data)
     binary = args.binary == 'True'
     command = _command(binary)
     try:
@@ -288,10 +303,11 @@ def __main__():
         link = str(response['link'])
         
         try:
-            if args.verbose == 2:
-                print('INFO: main       [PASS]')
             if link != 'null' and 'http' in link:
+                if args.verbose == 2:
+                    print('INFO: main       [PASS]')
                 print(str(link).rstrip())
+            # notify of a bad connection.
             #if  str(response['reason']) 
             #    reason = str(response['reason'])
             #if 'Connection' in reason:
@@ -314,15 +330,7 @@ def __test__():
     ###
     try:
         '''send link to stdout'''
-        name = 'ptpb_requests'
-        url = 'https://ptpb.pw'
-        payload = _infile()
-        print(payload)
-        response  = paste(name, url, payload)
-        print(response)
-        # print('link =', response['link'])
-        # if 'Connection' in reason: print('connection error')
-    
+   
     except Exception as e:
         raise
         print('ERROR: test:', e)

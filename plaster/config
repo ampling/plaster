@@ -24,8 +24,8 @@ url = https://clbin.com
 # url = https://clbin.com
 
 
-# [ptpb_requests]
-# url = https://ptpb.pw
+[ptpb_requests]
+url = https://ptpb.pw
 
 # [ampling]
 # login = ampling
