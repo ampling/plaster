@@ -18,17 +18,16 @@ def formula():
     form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
     return form 
 
-def post(url, data):
+def post(url, payload):
     '''alt plugin for ptpb'''
     try:
-        # r = requests.post(url, files={'file': open(data,'rb')})
-        brick = {'c': data}
-        r = requests.post(url, files=brick)
-        # code = r.status_code
-        # OK = r.status_code == requests.codes.ok
+        data = {'c': payload}
+        r = requests.post(url, files=data)
         link = r.content
-        response = {'link': link} # 'code': code, 'reason': reason}
-        return response
+        code = r.status_code
+        reason = r.reason
+        response = {'link': link, 'code': code, 'reason': reason}
     except Exception as e:
-        response = {'link': 'na', 'code': None, 'reason': e}
+        response = {'link': None, 'code': None, 'reason': e}
+    finally:
         return response

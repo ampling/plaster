@@ -29,9 +29,8 @@ def post(url, data):
         code = 'cats'
         # code = (resp.status_code + resp.reason)
         response = {'link': link }
-        print(response)
         return response
     except Exception as e:
-        response = {'link': 'na', 'code': None, 'reason': e}
+        response = {'link': None, 'code': None, 'reason': e}
         return response
 

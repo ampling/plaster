@@ -21,13 +21,13 @@ def formula():
 def post(url, data):
     '''alt plugin for clbin'''
     try:
-        # data = {'clbin': data}
-        r = requests.post(url, data)
+        c_data = {'clbin': data}
+        r = requests.post(url, c_data)
         link = r.content
         code = r.status_code
         reason = r.reason
         response = {'link': link, 'code': code, 'reason': reason} 
-        return response
     except Exception as e:
-        response = {'link': 'na', 'code': None, 'reason': e}
+        response = {'link': None, 'code': None, 'reason': e}
+    finally:
         return response

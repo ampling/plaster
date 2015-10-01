@@ -21,12 +21,13 @@ def formula():
 def post(url, data):
     '''alt plugin for sprunge'''
     try:
-        p = {'sprunge=' + data]
+        p = {'sprunge=' + data}
         r = requests.post(url, p)
         link = r.content.strip()
         code = r.status_code
         reason = r.reason
         response = {'link': link, 'code': code, 'reason': reason}
     except Exception as e:
-        response = {'link': 'na', 'code': None, 'reason': e}
-    return response
+        response = {'link': None, 'code': None, 'reason': e}
+    finally:
+        return response

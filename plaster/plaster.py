@@ -69,9 +69,6 @@ def _acquire():
         outfile.write(infile)
     return ('/tmp/plasti')
 	
-def _incopy():
-    pass
-
 def _sniff(infile):
     sniff = str(magic.from_file('/tmp/plasti'))
     return 'image' in sniff
@@ -172,16 +169,24 @@ def paste(name, url, data):
     The return value is a dicionary {'link': 'https://clbin.com'}
     '''
     try:
-        # url = config[name]['url']
+        response = 'null'
         response = _load(name).post(url, data)
-        if args.verbose == 2:
-            print('INFO:','paste     ', '[PASS]')
-        return response
+        if 'http' not in str(response['link']):
+            if response['reason']:
+                if args.verbose:
+                    print('ERROR: plugin    [FAIL]')
+                if args.verbose == 2:
+                    print('e:', response['reason'])
+        else:
+            if args.verbose == 2:
+                print('INFO:','paste     ', '[PASS]')
     except Exception as e:
         if args.verbose:
             print('WARNING: paste   [FAIL]')
         if args.verbose == 2:
             print('e:', e)
+    finally: 
+        return response
 
 
 def plaster(command, data):
@@ -247,6 +252,9 @@ def __main__():
     if binary is True:
         with open(payload, 'rb') as f:
             read_data = f.read()
+    if read_data is '':
+        print('empty file')
+        exit(1)
     try:
         '''sends hyperlink to stdout'''
         response = plaster(command, read_data)
