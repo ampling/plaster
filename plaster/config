@@ -9,8 +9,8 @@
 # [clbin_urllib]
 # url = https://clbin.com 
 
-# [sprunge]
-# url = sprunge.us
+[sprunge]
+url = sprunge.us
 
 # [sprunge_requests]
 # url = sprunge.us

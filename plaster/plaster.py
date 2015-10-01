@@ -15,7 +15,6 @@ Plaster is an adaptable command-line pastebin client.
 import argparse
 import configparser
 import mimetypes
-import io
 from os import path
 from sys import stdin, stdout
 from importlib.machinery import SourceFileLoader
@@ -58,17 +57,17 @@ args = parser.parse_args()
 # BEGIN helper funtions 
 #
 
-def _stdin():
-    '''Reads text or binary from stdin.'''
-    infile = stdin.buffer.read()
-    outfile = open('/tmp/plasti', 'wb')
-    outfile.write(infile)
-    return (outfile)
-
-def _infile():
-    with open(str(args.infile), 'rb') as i, open('/tmp/plasti', 'wb') as out:
-        out.write(i.read())
-    return '/tmp/plasti'
+def _acquire():
+    '''Reads text or binary from stdin or infile'''
+    if args.infile:
+        with open(str(args.infile), 'rb') as i, open('/tmp/plasti', 'wb') as out:
+            out.write(i.read())
+        ##_xcopyin
+    else: 
+        infile = stdin.buffer.read()
+        outfile = open('/tmp/plasti', 'wb')
+        outfile.write(infile)
+    return ('/tmp/plasti')
 	
 def _incopy():
     pass
@@ -127,10 +126,7 @@ def _cull(command, mark):
             name = config.sections()[mark]
             if args.verbose:
                 print(mark + 1, '/', sections, ' >>', name)
-            # if args.verbose == 2:
-            #     print(mark + 1, '/', sections)
             form = _load(name).formula()
-            ## here 
         except Exception as e:
             name = 'null'
             if args.verbose:
@@ -242,25 +238,17 @@ def plaster(command, data):
 config = _config()
 
 def __main__():
-    if args.infile:
-        entry = _infile()
-        if args.verbose:
-            print('infile mode [ON]')
-    ##_xcopyin
-    if not args.infile:  # or _xcopyin
-        entry = _stdin()
-    binary = _sniff('/tmp/plasti')
+    payload = _acquire()
+    binary = _sniff(payload)
     command = _command(binary)
+    if binary is False:
+        with open(payload, 'r') as f:
+            read_data = f.read()
+    if binary is True:
+        with open(payload, 'rb') as f:
+            read_data = f.read()
     try:
         '''sends hyperlink to stdout'''
-        if binary is False:
-            with open('/tmp/plasti', 'r') as f:
-                read_data = f.read()
-        if binary is True:
-            with open('/tmp/plasti', 'rb') as f:
-                data = f.read()
-        print('f =', f)    
-        print('data =', read_data)
         response = plaster(command, read_data)
         if response is 'null':
             if args.verbose:
@@ -296,12 +284,6 @@ def __test__():
     ###
     try:
         '''send link to stdout'''
-        
-        
-        with open('/tmp/plasti', 'r') as f:
-            read_data = f.read()
-        
-        print(read_data)
     except Exception as e:
         raise
         print('ERROR: test:', e)

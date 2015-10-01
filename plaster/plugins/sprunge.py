@@ -23,7 +23,6 @@ def post(url, data):
     try:
         conn = http.client.HTTPConnection(url)
         conn.request("POST", "/", "sprunge=" + data)
-        print('dog')
         resp = conn.getresponse()
         link = resp.read()
         reason = 'cats'
@@ -33,7 +32,6 @@ def post(url, data):
         print(response)
         return response
     except Exception as e:
-        # raise
         response = {'link': 'na', 'code': None, 'reason': e}
         return response
 
