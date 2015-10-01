@@ -15,6 +15,7 @@ Plaster is an adaptable command-line pastebin client.
 import argparse
 import configparser
 import mimetypes
+import io
 from os import path
 from sys import stdin, stdout
 from importlib.machinery import SourceFileLoader
@@ -59,58 +60,22 @@ args = parser.parse_args()
 
 def _stdin():
     '''Reads text or binary from stdin.'''
-    try:
-        entry = stdin.read()
-        binary = False
-        if args.verbose:
-            print('+text detected')
-        with open('/tmp/plasti', 'w') as f:
-            f.write(entry)
-        entry = str('/tmp/plasti')
-    except KeyboardInterrupt:
-        print('try:', 'plaster < example.txt' )
-        exit(1)
-    except Exception as e:
-        print('feature coming soon')
-        exit(1)
-        '''
-        buffersize = 100000
-        f = stdin.buffer.read()
-        infile = open(str(f), 'rb')
-        outfile = open('/tmp/plasti', 'wb')
-        buffer = infile.read(buffersize)
-        while len(buffer):
-            outfile.write(buffer)
-            buffer = infile.read(buffersize)
-        entry = str('/tmp/plasti')
-        '''
-
-        binary = True
-        entry = stdin.buffer.read() 
-        out = stdout.buffer.write(entry)
-        with open('/tmp/plasti', 'wb') as f:
-            f.write(entry)
-            
-    return (entry, binary)
+    infile = stdin.buffer.read()
+    outfile = open('/tmp/plasti', 'wb')
+    outfile.write(infile)
+    return (outfile)
 
 def _infile():
-    buffersize = 100000 # change to var
-    infile = open(str(args.infile), 'rb')
-    outfile = open('/tmp/plasti', 'wb')
-    buffer = infile.read(buffersize)
-    while len(buffer):
-        outfile.write(buffer)
-        buffer = infile.read(buffersize)
-    entry = str('/tmp/plasti')
-    return entry
-
+    with open(str(args.infile), 'rb') as i, open('/tmp/plasti', 'wb') as out:
+        out.write(i.read())
+    return '/tmp/plasti'
+	
 def _incopy():
     pass
 
 def _sniff(infile):
-    sniff = magic.from_file('/tmp/new.png')
-    print(sniff)   
-
+    sniff = str(magic.from_file('/tmp/plasti'))
+    return 'image' in sniff
 
 def _config():
     '''Parse configuration file, from top to bottom.'''
@@ -124,8 +89,8 @@ def _config():
             print('INFO: config:    [PASS]')
         return config
     except Exception as e: 
-        if args.verbose:
-            print('ERROR: config:', e)
+        print('ERROR: config:')
+        print('e:', e)
 
 def _command(binary):
     '''Compose a dictionary to match specified parameters.'''
@@ -229,9 +194,10 @@ def plaster(command, data):
     example: plaster({'txt': 'yes'}, "Hello, World!") 
     The return value is a dicionary {'link': 'https://clbin.com'}
     '''
-    sections = (len(config.sections()) - 1)
-    i, mark = 1, 0
-    for i in range(1, sections):
+    sections = (len(config.sections()))
+    i, mark = 0, 0
+    response = 'null'
+    for i in range(0, sections):
         ## i & mark should work in unison.
         try:
             cull = _cull(command, mark)
@@ -277,31 +243,31 @@ config = _config()
 
 def __main__():
     if args.infile:
-        data = _infile()
+        entry = _infile()
         if args.verbose:
             print('infile mode [ON]')
     ##_xcopyin
     if not args.infile:  # or _xcopyin
-        print('cats') 
-        data = _stdin()
-        payload = data[0]
-        binary = data[1]
-    if args.infile:
-        binary = _sniff(data)
-    binary = args.binary == 'True'
+        entry = _stdin()
+    binary = _sniff('/tmp/plasti')
     command = _command(binary)
     try:
         '''sends hyperlink to stdout'''
-        response = 'null'
-        # data = args.infile
-        response = plaster(command, data)
+        if binary is False:
+            with open('/tmp/plasti', 'r') as f:
+                read_data = f.read()
+        if binary is True:
+            with open('/tmp/plasti', 'rb') as f:
+                data = f.read()
+        print('f =', f)    
+        print('data =', read_data)
+        response = plaster(command, read_data)
         if response is 'null':
             if args.verbose:
                 print('done')
             exit(1)
         link = 'null'
         link = str(response['link'])
-        
         try:
             if link != 'null' and 'http' in link:
                 if args.verbose == 2:
@@ -330,7 +296,12 @@ def __test__():
     ###
     try:
         '''send link to stdout'''
-   
+        
+        
+        with open('/tmp/plasti', 'r') as f:
+            read_data = f.read()
+        
+        print(read_data)
     except Exception as e:
         raise
         print('ERROR: test:', e)

@@ -22,7 +22,7 @@ def post(url, data):
     '''alt plugin for ptpb'''
     try:
         # r = requests.post(url, files={'file': open(data,'rb')})
-        brick = {'c': open(data, 'rb')}
+        brick = {'c': data}
         r = requests.post(url, files=brick)
         # code = r.status_code
         # OK = r.status_code == requests.codes.ok

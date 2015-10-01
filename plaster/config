@@ -3,26 +3,23 @@
 # plaster.rc
 #
 
-[clbin_curl]
-url = https://clbin.com
+# [clbin_curl]
+# url = https://clbin.com
 
-[clbin_urllib]
-url = https://clbin.com 
+# [clbin_urllib]
+# url = https://clbin.com 
 
-[sprunge_requests]
-url = sprunge.us
+# [sprunge]
+# url = sprunge.us
 
+# [sprunge_requests]
+# url = sprunge.us
 
-[ptpb]
-url = https://ptpb.pw
-
-[clbin]
-url = https://clbin.com
-
+# [ptpb]
+# url = https://ptpb.pw
 
 # [clbin_requests]
 # url = https://clbin.com
-
 
 [ptpb_requests]
 url = https://ptpb.pw
