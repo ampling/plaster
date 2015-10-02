@@ -8,22 +8,22 @@
 import requests
 
 
-def formula():
+def tell_form():
     '''Availability'''
     txt = 'yes'
     img = 'no'
     tls = 'no'
     time = 'no'
     nick = 'no'
-    form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
-    return form 
+    formula = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
+    return formula 
 
-def post(url, data):
+def tell_post(url, data):
     '''alt plugin for sprunge'''
     try:
-        p = {'sprunge=' + data}
-        r = requests.post(url, p)
-        link = r.content.strip()
+        d = {'sprunge': data}
+        r = requests.post(url, d)
+        link = r.content.decode("utf-8")
         code = r.status_code
         reason = r.reason
         response = {'link': link, 'code': code, 'reason': reason}

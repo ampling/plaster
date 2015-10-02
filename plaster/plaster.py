@@ -15,13 +15,14 @@ Plaster is an adaptable command-line pastebin client.
 import argparse
 import configparser
 import mimetypes
-from os import path
-from sys import stdin, stdout
+from os import path, isatty, stat
+from sys import stdin
 from importlib.machinery import SourceFileLoader
 
 import magic
+import pyperclip
 
-version = '0.042'
+version = '0.0.5'
 
 config_dir = path.join(path.expanduser('~'), '.config', 'plaster')
 config_file = path.join(config_dir, 'config')
@@ -32,44 +33,69 @@ prefix = path.join(config_dir, 'plugins')
 #
 
 parser = argparse.ArgumentParser(description='plaster v{}'.format(version))
-parser.add_argument('infile', default='',
+parser.add_argument('content', default='',
         help='select a file', nargs='?', type=str)
 # parser.add_argument("-a", "--authenticate", 
 #         help="use authentication set in config", action="store_true")
 parser.add_argument("-b", "--binary", nargs='?', default=False, type=bool, 
         help="bypass autodetect; set content as image: True or False")
 parser.add_argument("-e", "--expire", nargs='?', default=1, type=int,
-        help="time to expire")
+        help="expire time in days")
+parser.add_argument("-f", "--force", 
+        help="force unsafe behavior", action="store_true")
 parser.add_argument("-s", "--secure", 
-        help="use only https", action="store_true")
+        help="https everywhere", action="store_true")
 parser.add_argument("-v", "--verbose", 
         help="increase verbosity", action="count")
-
-# parser.add_argument("-x", "--xclip", 
-#         help="send link to clipboard", action="store_true")
-
+parser.add_argument("-x", "--xclip", 
+        help="send link to clipboard", action="store_true")
+parser.add_argument("-X", "--Xclip", 
+        help="push clipboard to plaster; requires --force", action="store_true")
 args = parser.parse_args()
-# if args.xclip:
-#     print('xclip')
-#     pyperclip.copy(link)
 
 #
 # BEGIN helper funtions 
 #
 
-def _acquire():
-    '''Reads text or binary from stdin or infile'''
-    if args.infile:
-        with open(str(args.infile), 'rb') as i, open('/tmp/plasti', 'wb') as out:
-            out.write(i.read())
-        ##_xcopyin
-    else: 
-        infile = stdin.buffer.read()
-        outfile = open('/tmp/plasti', 'wb')
-        outfile.write(infile)
-    return ('/tmp/plasti')
+def _inlet():
+    '''Reads all, returns file location'''
+    try:
+        ## known path
+        if args.content:
+            with open(str(args.content), 'rb') as i:
+                with open('/tmp/plasti', 'wb') as out:
+                    out.write(i.read())
+        
+        elif args.Xclip and not args.force:
+            print('plaster your clipboard for all to see?')
+            print('add -f')
+            exit(1)
+        
+        elif args.Xclip and args.force: 
+            content = pyperclip.paste()
+            outfile = open('/tmp/plasti', 'w')
+            outfile.write(content)
+        elif isatty(0):
+            print('enter a file to plaster')
+            content = input('$ ')
+            with open(str(content), 'rb') as i:
+                 with open('/tmp/plasti', 'wb') as out:
+                     out.write(i.read())
+        ## unknown path
+        
+        else: 
+            content = stdin.buffer.read()
+            outfile = open('/tmp/plasti', 'wb')
+            outfile.write(content)
+        return ('/tmp/plasti')
+    except KeyboardInterrupt:
+        print()
+        exit("for help, try: plaster -h")
+    except Exception as e:
+        print('e: inlet:', e)
+        exit(1)
 	
-def _sniff(infile):
+def _sniff(content):
     sniff = str(magic.from_file('/tmp/plasti'))
     return 'image' in sniff
 
@@ -78,15 +104,20 @@ def _config():
     try:
         config = configparser.ConfigParser()
         config.read(config_file)
+        if stat(config_file).st_size == 0:
+            print('e: config appears empty, exiting')
+            exit(config_file)
         if config.sections() == []:
-            print(config_file, 'appears empty')
+            print('e: config needs sections, exiting')
+            print(config_file)
             exit(1)
         if args.verbose:
             print('INFO: config:    [PASS]')
         return config
     except Exception as e: 
-        print('ERROR: config:')
+        print('ERROR: config    [FAIL]')
         print('e:', e)
+        exit(1)
 
 def _command(binary):
     '''Compose a dictionary to match specified parameters.'''
@@ -122,8 +153,8 @@ def _cull(command, mark):
         try:
             name = config.sections()[mark]
             if args.verbose:
-                print(mark + 1, '/', sections, ' >>', name)
-            form = _load(name).formula()
+                print(mark + 1, '/', sections, ' >>>', name)
+            formula = _load(name).tell_form()
         except Exception as e:
             name = 'null'
             if args.verbose:
@@ -132,8 +163,8 @@ def _cull(command, mark):
                 print('e:', e)
             continue
         try:  
-            diff = set(form.keys()) - set(command.keys())
-            sim = set(command.items()) & set(form.items())
+            diff = set(formula.keys()) - set(command.keys())
+            sim = set(command.items()) & set(formula.items())
             if len(sim) is len(command):
                 if args.verbose:
                     print('INFO:', 'cull      ', '[PASS]')
@@ -153,7 +184,6 @@ def _load(name):
     try:
         plugin_path = path.join(prefix, '.'.join([name, 'py']))
         spec = SourceFileLoader(name, plugin_path)
-        # errors here
         module = spec.load_module()
         if args.verbose == 2:
             print('INFO:', 'load      ', '[PASS]')
@@ -170,7 +200,7 @@ def paste(name, url, data):
     '''
     try:
         response = 'null'
-        response = _load(name).post(url, data)
+        response = _load(name).tell_post(url, data)
         if 'http' not in str(response['link']):
             if response['reason']:
                 if args.verbose:
@@ -187,7 +217,6 @@ def paste(name, url, data):
             print('e:', e)
     finally: 
         return response
-
 
 def plaster(command, data):
     '''
@@ -243,14 +272,14 @@ def plaster(command, data):
 config = _config()
 
 def __main__():
-    payload = _acquire()
-    binary = _sniff(payload)
+    outfile = _inlet()
+    binary = _sniff(outfile)
     command = _command(binary)
     if binary is False:
-        with open(payload, 'r') as f:
+        with open(outfile, 'r') as f:
             read_data = f.read()
     if binary is True:
-        with open(payload, 'rb') as f:
+        with open(outfile, 'rb') as f:
             read_data = f.read()
     if read_data is '':
         print('empty file')
@@ -269,19 +298,15 @@ def __main__():
                 if args.verbose == 2:
                     print('INFO: main       [PASS]')
                 print(str(link).rstrip())
-            # notify of a bad connection.
-            #if  str(response['reason']) 
-            #    reason = str(response['reason'])
-            #if 'Connection' in reason:
-            #    if args.verbose:
-            #        print('ERROR:', 'connection problem')
         except:
-            pass
-        #else:
-        #    if args.verbose:
-        #        print('ERROR:', 'main ', '   [FAIL]')
-        #    if not args.verbose:
-        #        print('to debug, try plaster -v')
+            if args.verbose:
+               print('ERROR:', 'main ', '   [FAIL]')
+            if not args.verbose:
+               print('to debug, try plaster -v')
+            
+        ## optional clipboard feature
+        if args.xclip:
+            pyperclip.copy(link)
     except Exception as e:
         if args.verbose == 2:
             print("ERROR: main:", e)
@@ -292,6 +317,10 @@ def __test__():
     ###
     try:
         '''send link to stdout'''
+    
+        outfile = _inlet()
+        binary = _sniff(outfile)
+        print(binary)
     except Exception as e:
         raise
         print('ERROR: test:', e)

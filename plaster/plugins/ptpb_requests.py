@@ -8,22 +8,23 @@
 import requests
 
 
-def formula():
+def tell_form():
     '''Availability'''
     txt = 'yes'
     img = 'yes'
     tls = 'yes'
     time = 'yes'
     nick = 'no'
-    form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
-    return form 
+    formula = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
+    return formula 
 
-def post(url, payload):
+def tell_post(url, payload):
     '''alt plugin for ptpb'''
     try:
         data = {'c': payload}
         r = requests.post(url, files=data)
-        link = r.content
+        # link = r.content.decode("utf-8").split()[10]
+        link = r.content.decode("utf-8").rpartition(' ')[-1]
         code = r.status_code
         reason = r.reason
         response = {'link': link, 'code': code, 'reason': reason}

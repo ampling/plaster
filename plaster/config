@@ -3,20 +3,20 @@
 # plaster.rc
 #
 
-[sprunge_requests]
-url = sprunge.us
-
 [sprunge]
 url = sprunge.us
+
+[sprunge_requests]
+url = http://sprunge.us
 
 [ptpb]
 url = https://ptpb.pw
 
-# [clbin_requests]
-# url = https://clbin.com
-
 [ptpb_requests]
 url = https://ptpb.pw
+
+# [clbin_requests]
+# url = https://clbin.com
 
 # [ampling]
 # login = ampling

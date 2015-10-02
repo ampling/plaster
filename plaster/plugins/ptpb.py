@@ -8,24 +8,24 @@
 import http.client
 import ssl
 
-def formula():
+def tell_form():
     '''Availability'''
     txt = 'yes'
     img = 'yes'
     tls = 'yes'
     time = 'yes'
     nick = 'no'
-    form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
-    return form 
+    formula = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
+    return formula 
 
-def post(url, data):
+def tell_post(url, data):
     '''plugin for ptpb'''
     try:    
         conn = http.client.HTTPSConnection(url)
         conn.request("POST", "/", data)
         resp = conn.getresponse()
         # code = resp.status + resp.reason
-        link = resp.read()
+        link = resp.read().decode("utf-8")
         response = {'link': link}
         return response
     except Exception as e:

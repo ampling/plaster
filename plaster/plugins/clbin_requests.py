@@ -8,22 +8,22 @@
 import requests
 
 
-def formula():
+def tell_form():
     '''Availability'''
     txt = 'yes'
     img = 'yes'
     tls = 'yes'
     time = 'no'
     nick = 'no'
-    form = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
-    return form  
+    formula = {'txt': txt, 'img': img, 'tls': tls, 'time': time, 'nick': nick}
+    return formula  
 
-def post(url, data):
+def tell_post(url, data):
     '''alt plugin for clbin'''
     try:
         c_data = {'clbin': data}
         r = requests.post(url, c_data)
-        link = r.content
+        link = r.content.decode("utf-8")
         code = r.status_code
         reason = r.reason
         response = {'link': link, 'code': code, 'reason': reason} 
