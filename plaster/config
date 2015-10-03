@@ -3,24 +3,32 @@
 # plaster.rc
 #
 
-[sprunge]
-url = sprunge.us
+[clbin_requests]
+url = https://clbin.com
 
-[sprunge_requests]
-url = http://sprunge.us
+# [sprunge]
+# url = http://sprunge.us
 
-[ptpb]
-url = https://ptpb.pw
+# [sprunge_requests]
+# url = http://sprunge.us
 
-[ptpb_requests]
-url = https://ptpb.pw
+# [ptpb]
+# url = https://ptpb.pw
 
-# [clbin_requests]
+# [ptpb_requests]
+# url = https://ptpb.pw
+
+# [clbin]
 # url = https://clbin.com
 
+# [clbin_urllib]
+# url = https://clbin.com
+
+
 # [ampling]
-# login = ampling
-# passwordeval = passel server/account/pass
+# http://ampling.com
+# username = ampling
+# password = passel server/account/pass
 
 # [DEFAULT]
 # uptime = 30

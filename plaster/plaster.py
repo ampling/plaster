@@ -15,8 +15,8 @@ Plaster is an adaptable command-line pastebin client.
 import argparse
 import configparser
 import mimetypes
-from os import path, isatty, stat
 from sys import stdin
+from os import path, isatty, stat
 from importlib.machinery import SourceFileLoader
 
 import magic
@@ -35,22 +35,22 @@ prefix = path.join(config_dir, 'plugins')
 parser = argparse.ArgumentParser(description='plaster v{}'.format(version))
 parser.add_argument('content', default='',
         help='select a file', nargs='?', type=str)
-# parser.add_argument("-a", "--authenticate", 
-#         help="use authentication set in config", action="store_true")
-parser.add_argument("-b", "--binary", nargs='?', default=False, type=bool, 
-        help="bypass autodetect; set content as image: True or False")
-parser.add_argument("-e", "--expire", nargs='?', default=1, type=int,
-        help="expire time in days")
-parser.add_argument("-f", "--force", 
-        help="force unsafe behavior", action="store_true")
-parser.add_argument("-s", "--secure", 
-        help="https everywhere", action="store_true")
-parser.add_argument("-v", "--verbose", 
-        help="increase verbosity", action="count")
-parser.add_argument("-x", "--xclip", 
-        help="send link to clipboard", action="store_true")
-parser.add_argument("-X", "--Xclip", 
-        help="push clipboard to plaster; requires --force", action="store_true")
+parser.add_argument('-b', '--binary', nargs='?', default=False, type=bool, 
+        help='bypass autodetect; set content as image: True or False')
+parser.add_argument('-e', '--expiry', nargs='?', default=0, type=int,
+        help='expiry time in days')
+parser.add_argument('-f', '--force', 
+        help='force unsafe behavior', action='store_true')
+parser.add_argument('-l', '--login', 
+        help='authentication set in config', action='store_true')
+parser.add_argument('-s', '--secure', 
+        help='https everywhere', action='store_true')
+parser.add_argument('-v', '--verbose', 
+        help='increase verbosity', action='count')
+parser.add_argument('-x', '--xclip', 
+        help='copy link to clipboard', action='store_true')
+parser.add_argument('-X', '--Xclip', 
+        help='publish your clipboard; requires --force', action='store_true')
 args = parser.parse_args()
 
 #
@@ -65,12 +65,10 @@ def _inlet():
             with open(str(args.content), 'rb') as i:
                 with open('/tmp/plasti', 'wb') as out:
                     out.write(i.read())
-        
         elif args.Xclip and not args.force:
             print('plaster your clipboard for all to see?')
             print('add -f')
             exit(1)
-        
         elif args.Xclip and args.force: 
             content = pyperclip.paste()
             outfile = open('/tmp/plasti', 'w')
@@ -90,7 +88,7 @@ def _inlet():
         return ('/tmp/plasti')
     except KeyboardInterrupt:
         print()
-        exit("for help, try: plaster -h")
+        exit('for help, try: plaster -h')
     except Exception as e:
         print('e: inlet:', e)
         exit(1)
@@ -129,18 +127,18 @@ def _command(binary):
     except:
         pass
     try:
-        # if args.authenticate:
-        #     command.update({'nick': 'yes'})
-        #     if args.verbose:
-        #         print('authentication mode enabled')
+        if args.login:
+            command.update({'login': 'yes'})
+            if args.verbose:
+                print('authentication mode enabled')
         if args.secure:
             command.update({'tls': 'yes'})
             if args.verbose:
                 print('tls mode enabled')
-        # if args.expire:
-        #     command.update({'time': 'yes'})
-        #     if args.verbose:
-        #         print('ephemeral mode enabled') 
+        if args.expiry:
+            command.update({'time': 'yes'})
+            if args.verbose:
+                print('ephemeral mode enabled') 
         return command
     except Exception as e:
         if args.verbose == 2:
@@ -192,15 +190,25 @@ def _load(name):
         if args.verbose == 2:
             print('e:', e)
 
-def paste(name, url, data):
+def push(name, data):
     '''
     Sends data to specified pastebin.
-    example: paste('clbin', 'https://clbin.com', 'Hello, World!')
+    example: push('clbin', 'https://clbin.com', 'Hello, World!')
     The return value is a dicionary {'link': 'https://clbin.com'}
     '''
     try:
+        if args.login:
+            login = (config[name]['username'], config[name]['password'])
+        else:
+            login = (None, None)
+        request_chain = {
+                'url': config[name]['url'], 
+                'data': data, 
+                'time': args.expiry, 
+                'login': login
+                }
         response = 'null'
-        response = _load(name).tell_post(url, data)
+        response = _load(name).tell_post(request_chain)
         if 'http' not in str(response['link']):
             if response['reason']:
                 if args.verbose:
@@ -209,10 +217,10 @@ def paste(name, url, data):
                     print('e:', response['reason'])
         else:
             if args.verbose == 2:
-                print('INFO:','paste     ', '[PASS]')
+                print('INFO:','push      ', '[PASS]')
     except Exception as e:
         if args.verbose:
-            print('WARNING: paste   [FAIL]')
+            print('WARNING: push    [FAIL]')
         if args.verbose == 2:
             print('e:', e)
     finally: 
@@ -234,8 +242,8 @@ def plaster(command, data):
             name = cull[0]
             mark = cull[1] + 1
             i = cull[1] + 1
-            url = config[name]['url']
-            response = paste(name, url, data)
+            # url = config[name]['url']
+            response = push(name, data)
             try:
                 link = str(response['link'])
             except Exception as e:
@@ -309,7 +317,7 @@ def __main__():
             pyperclip.copy(link)
     except Exception as e:
         if args.verbose == 2:
-            print("ERROR: main:", e)
+            print('ERROR: main:', e)
         raise
     
 def __test__(): 
@@ -317,7 +325,6 @@ def __test__():
     ###
     try:
         '''send link to stdout'''
-    
         outfile = _inlet()
         binary = _sniff(outfile)
         print(binary)
@@ -326,6 +333,6 @@ def __test__():
         print('ERROR: test:', e)
     
     
-if __name__ == "__main__":
+if __name__ == '__main__':
     __main__()
     # __test__()
