@@ -15,14 +15,28 @@ Plaster is an adaptable command-line pastebin client.
 import argparse
 import configparser
 import mimetypes
+import itertools
+import random
+import tempfile
 from sys import stdin
 from os import path, isatty, stat
 from importlib.machinery import SourceFileLoader
 
-import magic
-import pyperclip
+try:
+    import magic
+    import_magic = True
+except Exception as e:
+    import_magic = False
+    print('e:', e)
 
-version = '0.0.5'
+try:
+    import pyperclip
+    import_pyperclip = True
+except Exception as e:
+    import_pyperclip = False
+    print('e:', e)
+
+version = '0.0.6'
 
 config_dir = path.join(path.expanduser('~'), '.config', 'plaster')
 config_file = path.join(config_dir, 'config')
@@ -54,7 +68,7 @@ parser.add_argument('-X', '--Xclip',
 args = parser.parse_args()
 
 #
-# BEGIN helper funtions 
+# BEGIN helper functions 
 #
 
 def _inlet():
@@ -62,39 +76,34 @@ def _inlet():
     try:
         ## known path
         if args.content:
-            with open(str(args.content), 'rb') as i:
-                with open('/tmp/plasti', 'wb') as out:
-                    out.write(i.read())
+            content_path = args.content
         elif args.Xclip and not args.force:
             print('plaster your clipboard for all to see?')
             print('add -f')
             exit(1)
         elif args.Xclip and args.force: 
-            content = pyperclip.paste()
-            outfile = open('/tmp/plasti', 'w')
-            outfile.write(content)
+            content = bytes(pyperclip.paste(), 'utf-8')
+            content_path = None
         elif isatty(0):
             print('enter a file to plaster')
-            content = input('$ ')
-            with open(str(content), 'rb') as i:
-                 with open('/tmp/plasti', 'wb') as out:
-                     out.write(i.read())
-        ## unknown path
-        
+            content_path = input('$ ')
         else: 
+            content_path = None
             content = stdin.buffer.read()
-            outfile = open('/tmp/plasti', 'wb')
-            outfile.write(content)
-        return ('/tmp/plasti')
+        if content_path is not None:
+            with open(str(content_path), 'rb') as i:
+                content = i.read()
+        return content
     except KeyboardInterrupt:
         print()
         exit('for help, try: plaster -h')
     except Exception as e:
         print('e: inlet:', e)
         exit(1)
-	
+
 def _sniff(content):
-    sniff = str(magic.from_file('/tmp/plasti'))
+    if import_magic == True:
+        sniff = (magic.from_buffer(content)).decode('utf-8')
     return 'image' in sniff
 
 def _config():
@@ -269,10 +278,6 @@ def plaster(command, data):
             continue
     return response
 
-# add passwordeval
-# def passwordeval():
-#    gpg
-
 #
 # main
 #
@@ -280,21 +285,12 @@ def plaster(command, data):
 config = _config()
 
 def __main__():
-    outfile = _inlet()
-    binary = _sniff(outfile)
+    content = _inlet()
+    binary = _sniff(content)
     command = _command(binary)
-    if binary is False:
-        with open(outfile, 'r') as f:
-            read_data = f.read()
-    if binary is True:
-        with open(outfile, 'rb') as f:
-            read_data = f.read()
-    if read_data is '':
-        print('empty file')
-        exit(1)
     try:
         '''sends hyperlink to stdout'''
-        response = plaster(command, read_data)
+        response = plaster(command, content)
         if response is 'null':
             if args.verbose:
                 print('done')
@@ -319,19 +315,15 @@ def __main__():
         if args.verbose == 2:
             print('ERROR: main:', e)
         raise
-    
+		
 def __test__(): 
     print('debug mode [ON]')
     ###
     try:
         '''send link to stdout'''
-        outfile = _inlet()
-        binary = _sniff(outfile)
-        print(binary)
     except Exception as e:
         raise
         print('ERROR: test:', e)
-    
     
 if __name__ == '__main__':
     __main__()
