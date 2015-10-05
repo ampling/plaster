@@ -9,15 +9,11 @@
  )___/ )(__  /(__)\ \__ \  )(   )__)  )   /
 (__)  (____)(__)(__)(___/ (__) (____)(_)\_)
 
-Plaster is an adaptable command-line pastebin client.
+Plaster is an adaptable command-line paste-bin client.
 '''
 
 import argparse
 import configparser
-import mimetypes
-import itertools
-import random
-import tempfile
 from sys import stdin
 from os import path, isatty, stat
 from importlib.machinery import SourceFileLoader
@@ -30,13 +26,14 @@ except Exception as e:
     print('e:', e)
 
 try:
+    ## requires xclip
     import pyperclip
     import_pyperclip = True
 except Exception as e:
     import_pyperclip = False
     print('e:', e)
 
-version = '0.0.6'
+version = '0.0.7'
 
 config_dir = path.join(path.expanduser('~'), '.config', 'plaster')
 config_file = path.join(config_dir, 'config')
@@ -46,50 +43,82 @@ prefix = path.join(config_dir, 'plugins')
 # options
 #
 
-parser = argparse.ArgumentParser(description='plaster v{}'.format(version))
-parser.add_argument('content', default='',
-        help='select a file', nargs='?', type=str)
-parser.add_argument('-b', '--binary', nargs='?', default=False, type=bool, 
-        help='bypass autodetect; set content as image: True or False')
-parser.add_argument('-e', '--expiry', nargs='?', default=0, type=int,
-        help='expiry time in days')
-parser.add_argument('-f', '--force', 
-        help='force unsafe behavior', action='store_true')
+## simpler than than getopts
+parser = argparse.ArgumentParser(description=
+        'plaster v{}, a data sharing utility'.format(version))
+parser.add_argument('content', default='', nargs='?',
+        help='path to file', type=str)
 parser.add_argument('-l', '--login', 
-        help='authentication set in config', action='store_true')
+        help='attempts authentication', action='store_true')
 parser.add_argument('-s', '--secure', 
-        help='https everywhere', action='store_true')
+        help='use only https', action='store_true')
 parser.add_argument('-v', '--verbose', 
         help='increase verbosity', action='count')
 parser.add_argument('-x', '--xclip', 
         help='copy link to clipboard', action='store_true')
 parser.add_argument('-X', '--Xclip', 
-        help='publish your clipboard; requires --force', action='store_true')
+        help='publish your clipboard; *risky', action='store_true')
+parser.add_argument('-f', '--force', 
+        help='force risky behavior', action='store_true')
+parser.add_argument('-e', '--expiry', nargs='?', default=0, type=int,
+        help='expiry time; default')
+parser.add_argument('-m', '--manual', default=0,
+        help="set media type or list and exit")
 args = parser.parse_args()
 
 #
 # BEGIN helper functions 
 #
 
-def _inlet():
-    '''Reads all, returns file location'''
+def _config():
+    '''
+    Parse configuration file, from top to bottom.
+    Configuration location should be adjustable.
+    '''
     try:
-        ## known path
+        config = configparser.ConfigParser()
+        config.read(config_file)
+        ## Measures file size for helpful message.
+        if stat(config_file).st_size == 0:
+            print('e: configuration appears empty')
+            print('try adding a section')
+            exit(config_file)
+        if config.sections() == []:
+            print('e: configuration needs sections')
+            print('try uncommenting a section')
+            exit(config_file)
+        if args.verbose:
+            print('INFO: config:    [PASS]')
+        return config
+    except Exception as e: 
+        print('ERROR: config    [FAIL]')
+        print('e:' , e)
+        exit(1)
+
+def _inlet():
+    '''Reads all, returns content in bytes.'''
+    try:
         if args.content:
             content_path = args.content
-        elif args.Xclip and not args.force:
-            print('plaster your clipboard for all to see?')
-            print('add -f')
-            exit(1)
-        elif args.Xclip and args.force: 
-            content = bytes(pyperclip.paste(), 'utf-8')
-            content_path = None
+        ## Optional clipboard feature. Requires xclip
+        elif args.Xclip:
+            if import_pyperclip == False:
+                exit('e: missing python-pyperclip')
+            if import_pyperclip == True:
+                if not args.force:
+                    print('plaster your clipboard for all to see?')
+                    exit('add -f')
+                elif args.force: 
+                    content = bytes(pyperclip.paste(), 'utf-8')
+                    content_path = None
+        ## measures no arguments or options.
         elif isatty(0):
             print('enter a file to plaster')
             content_path = input('$ ')
+        ## OK for now
         else: 
-            content_path = None
             content = stdin.buffer.read()
+            content_path = None
         if content_path is not None:
             with open(str(content_path), 'rb') as i:
                 content = i.read()
@@ -102,39 +131,44 @@ def _inlet():
         exit(1)
 
 def _sniff(content):
-    if import_magic == True:
-        sniff = (magic.from_buffer(content)).decode('utf-8')
-    return 'image' in sniff
-
-def _config():
-    '''Parse configuration file, from top to bottom.'''
-    try:
-        config = configparser.ConfigParser()
-        config.read(config_file)
-        if stat(config_file).st_size == 0:
-            print('e: config appears empty, exiting')
-            exit(config_file)
-        if config.sections() == []:
-            print('e: config needs sections, exiting')
-            print(config_file)
-            exit(1)
-        if args.verbose:
-            print('INFO: config:    [PASS]')
-        return config
-    except Exception as e: 
-        print('ERROR: config    [FAIL]')
-        print('e:', e)
+    media_types = ['image', 'text']
+    if args.manual and args.manual not in media_types:
+        print('list of media types:')
+        print(media_types)
         exit(1)
+    if args.manual and args.manual in media_types:
+        content_type = args.manual
+        return content_type
+    if not args.manual:
+        if import_magic == False:
+            print('e: python-magic missing')
+            exit('please install or use manual mode -m')
+        if import_magic == True:
+            content_type = (magic.from_buffer(content, mime=True)).decode('utf-8')
+    return content_type
 
-def _command(binary):
-    '''Compose a dictionary to match specified parameters.'''
+def _command(content_type):
+    '''
+    Composes a dictionary to match specified parameters.
+    Returns a dictionary.
+    '''
     try:
-        if binary is False:
-            command = {'txt': 'yes'}
-        if binary is True:
-            command = {'img': 'yes'}
-    except:
-        pass
+        if args.verbose == 2:
+            print(content_type)
+        if 'text' in content_type:
+            command = {'text': 'yes'}
+        elif 'image' in content_type:
+            command = {'image': 'yes'}
+        else:
+            if not args.force:
+                if not args.verbose == 2:
+                    print(content_type)
+                exit('e: untested media types requre -f')
+            command = {'image': 'yes'}
+        ## Add other content types here.
+    except Exception as e:
+        if args.verbose == 2:
+            print('e:', e)
     try:
         if args.login:
             command.update({'login': 'yes'})
@@ -154,7 +188,11 @@ def _command(binary):
             print('ERROR: command:', e)
 
 def _cull(command, mark): 
-    '''Choose the best plugin for the job.'''
+    '''
+    Accepts command as a dictionary and mark as it's starting point.
+    Returns the name of a suitable paste-bin and mark as it's place 
+    in the loop.
+    '''
     sections = len(config.sections())
     for mark in range(mark, sections):
         try:
@@ -165,7 +203,7 @@ def _cull(command, mark):
         except Exception as e:
             name = 'null'
             if args.verbose:
-                print('WARNING: cull   ', '[FAIL]')
+                print('WARNING: cull     [FAIL]')
             if args.verbose == 2:
                 print('e:', e)
             continue
@@ -174,11 +212,11 @@ def _cull(command, mark):
             sim = set(command.items()) & set(formula.items())
             if len(sim) is len(command):
                 if args.verbose:
-                    print('INFO:', 'cull      ', '[PASS]')
+                    print('INFO: cull       [PASS]')
                 break
             if len(sim) is not len(command):
                 if args.verbose:
-                    print('INFO:', 'cull      ', '[FAIL]')
+                    print('INFO: cull       [FAIL]')
                 name = None
                 continue
         except Exception as e:
@@ -193,7 +231,7 @@ def _load(name):
         spec = SourceFileLoader(name, plugin_path)
         module = spec.load_module()
         if args.verbose == 2:
-            print('INFO:', 'load      ', '[PASS]')
+            print('INFO: load       [PASS]')
         return module
     except Exception as e:
         if args.verbose == 2:
@@ -201,15 +239,17 @@ def _load(name):
 
 def push(name, data):
     '''
-    Sends data to specified pastebin.
-    example: push('clbin', 'https://clbin.com', 'Hello, World!')
-    The return value is a dicionary {'link': 'https://clbin.com'}
+    * This is the fuction which intereacts with plugins.
+    Accepts name of past-bin and data in bytes.
+    Example: push("clbin", "b'Hello, World!'")
+    Returns a dictionary with keys link, code and reason. 
     '''
     try:
         if args.login:
             login = (config[name]['username'], config[name]['password'])
         else:
             login = (None, None)
+        ## url and data are required, the rest are optional
         request_chain = {
                 'url': config[name]['url'], 
                 'data': data, 
@@ -226,7 +266,7 @@ def push(name, data):
                     print('e:', response['reason'])
         else:
             if args.verbose == 2:
-                print('INFO:','push      ', '[PASS]')
+                print('INFO: push       [PASS]')
     except Exception as e:
         if args.verbose:
             print('WARNING: push    [FAIL]')
@@ -237,21 +277,22 @@ def push(name, data):
 
 def plaster(command, data):
     '''
-    Compensates for ineffective pastebins.
-    example: plaster({'txt': 'yes'}, "Hello, World!") 
-    The return value is a dicionary {'link': 'https://clbin.com'}
+    Accepts command as a dictionary and data in bytes.
+    example: plaster({'txt': 'yes'}, "b'Hello, World!'") 
+    Return value is a dicionary with keys link, code and reason.
     '''
     sections = (len(config.sections()))
     i, mark = 0, 0
     response = 'null'
     for i in range(0, sections):
-        ## i & mark should work in unison.
         try:
+            ## mark should equal i.
             cull = _cull(command, mark)
             name = cull[0]
             mark = cull[1] + 1
             i = cull[1] + 1
-            # url = config[name]['url']
+            if name is 'null':
+                continue
             response = push(name, data)
             try:
                 link = str(response['link'])
@@ -266,7 +307,6 @@ def plaster(command, data):
             if mark <= sections:
                 if args.verbose == 2:
                     print('####')
-            '''plaster finds another plugin'''
         except Exception as e:
             response = 'null'
             mark = mark + 1
@@ -286,10 +326,10 @@ config = _config()
 
 def __main__():
     content = _inlet()
-    binary = _sniff(content)
-    command = _command(binary)
+    content_type = _sniff(content)
+    command = _command(content_type)
     try:
-        '''sends hyperlink to stdout'''
+        ## Command is a dictionary.
         response = plaster(command, content)
         if response is 'null':
             if args.verbose:
@@ -304,13 +344,15 @@ def __main__():
                 print(str(link).rstrip())
         except:
             if args.verbose:
-               print('ERROR:', 'main ', '   [FAIL]')
+               print('ERROR: main      [FAIL]')
             if not args.verbose:
                print('to debug, try plaster -v')
-            
-        ## optional clipboard feature
+        ## Optional clipboard feature. Requires xclip.
         if args.xclip:
-            pyperclip.copy(link)
+            if import_pyperclip == False:
+                exit('e: missing python-pyperclip')
+            if import_pyperclip == True:
+                pyperclip.copy(link)
     except Exception as e:
         if args.verbose == 2:
             print('ERROR: main:', e)
@@ -320,7 +362,7 @@ def __test__():
     print('debug mode [ON]')
     ###
     try:
-        '''send link to stdout'''
+        '''run test here'''
     except Exception as e:
         raise
         print('ERROR: test:', e)

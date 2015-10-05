@@ -11,8 +11,8 @@ import requests
 def tell_form():
     '''Availability'''
     formula = {
-            'txt': 'yes', 
-            'img': 'no', 
+            'text': 'yes', 
+            'image': 'no', 
             'tls': 'no', 
             'time': 'no', 
             'login': 'no'
