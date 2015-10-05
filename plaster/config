@@ -9,8 +9,8 @@
 # [sprunge]
 # url = http://sprunge.us
 
-# [sprunge_requests]
-# url = http://sprunge.us
+[sprunge_requests]
+url = http://sprunge.us
 
 # [ptpb]
 # url = https://ptpb.pw

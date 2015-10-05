@@ -13,6 +13,8 @@ def tell_form():
     formula = {
             'text': 'yes', 
             'image': 'yes', 
+            'audio': 'yes', 
+            'video': 'yes', 
             'tls': 'yes', 
             'time': 'yes', 
             'login': 'no'
@@ -30,8 +32,10 @@ def tell_post(request_chain):
         if time != 0:
             payload.update({'s': str(time)})
         r = requests.post(url, files=payload)
+        info = r.content.decode("utf-8").rpartition('https://')
+        link = ''.join([info[-2], info[-1].splitlines()[0]])
         response = {
-                'link': r.content.decode("utf-8").rpartition(' ')[-1], 
+                'link': link,
                 'code': r.status_code, 
                 'reason': r.reason
                 }

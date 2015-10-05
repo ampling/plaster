@@ -33,7 +33,7 @@ except Exception as e:
     import_pyperclip = False
     print('e:', e)
 
-version = '0.0.7'
+version = '0.0.8'
 
 config_dir = path.join(path.expanduser('~'), '.config', 'plaster')
 config_file = path.join(config_dir, 'config')
@@ -159,6 +159,10 @@ def _command(content_type):
             command = {'text': 'yes'}
         elif 'image' in content_type:
             command = {'image': 'yes'}
+        elif 'audio' in content_type:
+            command = {'audio': 'yes'}
+        elif 'video' in content_type:
+            command = {'video': 'yes'}
         else:
             if not args.force:
                 if not args.verbose == 2:
@@ -217,6 +221,10 @@ def _cull(command, mark):
             if len(sim) is not len(command):
                 if args.verbose:
                     print('INFO: cull       [FAIL]')
+                if mark is sections - 1:
+                    if args.verbose:
+                        print('failed to find a plugin match')
+                    exit(1)
                 name = None
                 continue
         except Exception as e:
