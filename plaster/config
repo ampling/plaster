@@ -28,5 +28,5 @@ url = https://ptpb.pw
 # username = ampling
 # password = passel server/account/pass
 
-# [DEFAULT]
-# uptime = 30
+[DEFAULT]
+ttl = 3000

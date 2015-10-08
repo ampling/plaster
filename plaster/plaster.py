@@ -128,7 +128,6 @@ def _inlet():
     except Exception as e:
         print('e: inlet:', e)
         exit(1)
-
 def _sniff(content):
     media_types = ['image', 'text']
     if args.manual and args.manual not in media_types:
@@ -246,8 +245,8 @@ def _load(name):
 
 def push(name, data):
     '''
-    * This is the fuction which intereacts with plugins.
-    Accepts name of past-bin and data in bytes.
+    This is the fuction which intereacts with plugins.
+    Accepts name of paste-bin and data in bytes.
     Example: push("clbin", "b'Hello, World!'")
     Returns a dictionary with keys link, code and reason. 
     '''
@@ -370,10 +369,12 @@ def __test__():
     ###
     try:
         '''run test here'''
+
+        print(config.sections()['ttl'])
     except Exception as e:
         raise
         print('ERROR: test:', e)
     
 if __name__ == '__main__':
-    __main__()
-    # __test__()
+    # __main__()
+    __test__()
