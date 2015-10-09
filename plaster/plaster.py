@@ -139,7 +139,6 @@ def _sniff(content):
         return content_type
     if not args.manual:
         if import_magic == False:
-            print('e: python-magic missing')
             exit('please install or use manual mode -m')
         if import_magic == True:
             content_type = (magic.from_buffer(content, mime=True)).decode('utf-8')
@@ -255,6 +254,10 @@ def push(name, data):
             login = (config[name]['username'], config[name]['password'])
         else:
             login = (None, None)
+        if args.expiry:
+            time = config['DEFAULT']['time']
+        else:
+            time = 0
         ## url and data are required, the rest are optional
         request_chain = {
                 'url': config[name]['url'], 
@@ -369,12 +372,13 @@ def __test__():
     ###
     try:
         '''run test here'''
-
-        print(config.sections()['ttl'])
+        name = 'DEFAULT'
+        p = config['DEFAULT']['time']
+        print(p)
     except Exception as e:
         raise
         print('ERROR: test:', e)
     
 if __name__ == '__main__':
-    # __main__()
-    __test__()
+    __main__()
+    # __test__()
