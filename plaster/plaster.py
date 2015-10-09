@@ -32,7 +32,7 @@ except Exception as e:
     import_pyperclip = False
     print('e:', e)
 
-version = '0.0.8'
+version = '0.0.9'
 
 config_dir = path.join(path.expanduser('~'), '.config', 'plaster')
 config_file = path.join(config_dir, 'config')
@@ -42,7 +42,6 @@ prefix = path.join(config_dir, 'plugins')
 # options
 #
 
-## simpler than than getopts
 parser = argparse.ArgumentParser(description=
         'plaster v{}, a data sharing utility'.format(version))
 parser.add_argument('content', default='', nargs='?',
@@ -59,8 +58,8 @@ parser.add_argument('-X', '--Xclip',
         help='publish your clipboard; *risky', action='store_true')
 parser.add_argument('-f', '--force', 
         help='force risky behavior', action='store_true')
-parser.add_argument('-e', '--expiry', nargs='?', default=0, type=int,
-        help='expiry time; default')
+parser.add_argument('-t', '--time', nargs='?', default=0, type=int,
+        help='expiry time')
 parser.add_argument('-m', '--manual', default=0,
         help="set media type or list and exit")
 args = parser.parse_args()
@@ -179,7 +178,7 @@ def _command(content_type):
             command.update({'tls': 'yes'})
             if args.verbose:
                 print('tls mode enabled')
-        if args.expiry:
+        if args.time != 0:
             command.update({'time': 'yes'})
             if args.verbose:
                 print('ephemeral mode enabled') 
@@ -254,15 +253,20 @@ def push(name, data):
             login = (config[name]['username'], config[name]['password'])
         else:
             login = (None, None)
-        if args.expiry:
-            time = config['DEFAULT']['time']
-        else:
-            time = 0
+        time = 0
+        if args.time != 0:
+            time = args.time
+        if args.time == None:
+            try:
+                time = config['DEFAULT']['time']
+            except Exception as e:
+                print('e:', e)
+                exit(1)
         ## url and data are required, the rest are optional
         request_chain = {
                 'url': config[name]['url'], 
                 'data': data, 
-                'time': args.expiry, 
+                'time': time, 
                 'login': login
                 }
         response = 'null'
