@@ -138,7 +138,7 @@ def _sniff(content):
         return content_type
     if not args.manual:
         if import_magic == False:
-            exit('please install or use manual mode -m')
+            exit('please install python-magic or use manual mode -m')
         if import_magic == True:
             content_type = (magic.from_buffer(content, mime=True)).decode('utf-8')
     return content_type
