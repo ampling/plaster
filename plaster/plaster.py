@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 #
 # Copyright (c) [2015-08-06], ISC license, [Ampling <plaster@ampling.com>]
+# Copyright (c) 2015 David McMackins II
 #
 '''
  ____  __      __    ___  ____  ____  ____ 
@@ -19,17 +20,15 @@ from importlib.machinery import SourceFileLoader
 
 try:
     import magic
-    import_magic = True
 except Exception as e:
-    import_magic = False
+    magic = None
     print('e:', e)
 
 try:
     ## requires xclip
     import pyperclip
-    import_pyperclip = True
 except Exception as e:
-    import_pyperclip = False
+    pyperclip = None
     print('e:', e)
 
 version = '0.0.9'
@@ -80,11 +79,11 @@ def _config():
         config = configparser.ConfigParser()
         config.read(config_file)
         ## Measures file size for helpful message.
-        if stat(config_file).st_size == 0:
+        if 0 == stat(config_file).st_size:
             print('e: configuration appears empty')
             print('try adding a section')
             exit(config_file)
-        if config.sections() == []:
+        if 0 == len(config.sections()):
             print('e: configuration needs sections')
             print('try uncommenting a section')
             exit(config_file)
@@ -98,20 +97,21 @@ def _config():
 
 def _inlet():
     '''Reads all, returns content in bytes.'''
+    content = None
+
     try:
         if args.content:
             content_path = args.content
         ## Optional clipboard feature. Requires xclip
         elif args.Xclip:
-            if import_pyperclip == False:
+            if not pyperclip:
                 exit('e: missing python-pyperclip')
-            if import_pyperclip == True:
-                if not args.force:
-                    print('plaster your clipboard for all to see?')
-                    exit('add -f')
-                elif args.force: 
-                    content = bytes(pyperclip.paste(), 'utf-8')
-                    content_path = None
+
+            if not args.force:
+                print('plaster your clipboard for all to see?')
+                exit('add -f')
+
+            content = bytes(pyperclip.paste(), 'utf-8')
         ## measures no arguments or options.
         elif isatty(0):
             print('enter a file to plaster')
@@ -119,10 +119,11 @@ def _inlet():
         ## OK for now
         else: 
             content = stdin.buffer.read()
-            content_path = None
+
         if content_path is not None:
-            with open(str(content_path), 'rb') as i:
+            with open(content_path, 'rb') as i:
                 content = i.read()
+
         return content
     except KeyboardInterrupt:
         print()
@@ -130,20 +131,23 @@ def _inlet():
     except Exception as e:
         print('e: inlet:', e)
         exit(1)
+
 def _sniff(content):
     media_types = ['image', 'text']
-    if args.manual and args.manual not in media_types:
-        print('list of media types:')
-        print(media_types)
-        exit(1)
-    if args.manual and args.manual in media_types:
+    if args.manual:
+        if args.manual not in media_types:
+            print('list of media types:')
+            print(media_types)
+            exit(1)
+
         content_type = args.manual
         return content_type
-    if not args.manual:
-        if import_magic == False:
+    else:
+        if not magic:
             exit('please install python-magic or use manual mode -m')
-        if import_magic == True:
-            content_type = (magic.from_buffer(content, mime=True)).decode('utf-8')
+
+        content_type = (magic.from_buffer(content, mime=True)).decode('utf-8')
+
     return content_type
 
 def _command(content_type):
@@ -152,7 +156,7 @@ def _command(content_type):
     Returns a dictionary.
     '''
     try:
-        if args.verbose == 2:
+        if 2 == args.verbose:
             print(content_type)
         if 'text' in content_type:
             command = {'text': 'yes'}
@@ -164,30 +168,34 @@ def _command(content_type):
             command = {'video': 'yes'}
         else:
             if not args.force:
-                if not args.verbose == 2:
+                if args.verbose != 2:
                     print(content_type)
                 exit('e: untested media types requre -f')
             command = {'image': 'yes'}
         ## Add other content types here.
     except Exception as e:
-        if args.verbose == 2:
+        if 2 == args.verbose:
             print('e:', e)
+
     try:
         if args.login:
             command.update({'login': 'yes'})
             if args.verbose:
                 print('authentication mode enabled')
+
         if args.secure:
             command.update({'tls': 'yes'})
             if args.verbose:
                 print('tls mode enabled')
+
         if args.time != 0:
             command.update({'time': 'yes'})
             if args.verbose:
-                print('ephemeral mode enabled') 
+                print('ephemeral mode enabled')
+
         return command
     except Exception as e:
-        if args.verbose == 2:
+        if 2 == args.verbose:
             print('ERROR: command:', e)
 
 def _cull(command, mark): 
@@ -210,31 +218,37 @@ def _cull(command, mark):
             if args.verbose == 2:
                 print('e:', e)
             continue
+
         try:  
             diff = set(formula.keys()) - set(command.keys())
             sim = set(command.items()) & set(formula.items())
-            if len(sim) is len(command):
+
+            if len(sim) == len(command):
                 if args.verbose:
                     print('INFO: cull       [PASS]')
                 break
-            if len(sim) is not len(command):
+
+            if len(sim) != len(command):
                 if args.verbose:
                     print('INFO: cull       [FAIL]')
-                if mark is sections - 1:
+
+                if sections - 1 == mark:
                     if args.verbose:
                         print('failed to find a plugin match')
                     exit(1)
+
                 name = None
                 continue
         except Exception as e:
             if args.verbose == 2:
                 print('ERROR: cull:', e)
+
     return (name, mark)
 
 def _load(name):
     '''Import a module by name.'''
     try:
-        plugin_path = path.join(prefix, '.'.join([name, 'py']))
+        plugin_path = path.join(prefix, name + '.py')
         spec = SourceFileLoader(name, plugin_path)
         module = spec.load_module()
         if args.verbose == 2:
@@ -256,29 +270,29 @@ def push(name, data):
             login = (config[name]['username'], config[name]['password'])
         else:
             login = (None, None)
-        time = 0
-        if args.time != 0:
-            time = args.time
-        if args.time == None:
+
+        time = args.time
+        if args.time is None:
             try:
                 time = config['DEFAULT']['time']
             except Exception as e:
                 print('e:', e)
                 exit(1)
+
         ## url and data are required, the rest are optional
         request_chain = {
-                'url': config[name]['url'], 
-                'data': data, 
-                'time': time, 
-                'login': login
-                }
-        response = 'null'
+            'url': config[name]['url'], 
+            'data': data, 
+            'time': time, 
+            'login': login
+        }
+
         response = _load(name).tell_post(request_chain)
         if 'http' not in str(response['link']):
             if response['reason']:
                 if args.verbose:
                     print('ERROR: plugin    [FAIL]')
-                if args.verbose == 2:
+                if 2 == args.verbose:
                     print('e:', response['reason'])
         else:
             if args.verbose == 2:
@@ -288,8 +302,11 @@ def push(name, data):
             print('WARNING: push    [FAIL]')
         if args.verbose == 2:
             print('e:', e)
-    finally: 
-        return response
+    finally:
+        try:
+            return response
+        except NameError:
+            return 'null'
 
 def plaster(command, data):
     '''
@@ -297,7 +314,7 @@ def plaster(command, data):
     example: plaster({'txt': 'yes'}, "b'Hello, World!'") 
     Return value is a dicionary with keys link, code and reason.
     '''
-    sections = (len(config.sections()))
+    sections = len(config.sections())
     i, mark = 0, 0
     response = 'null'
     for i in range(0, sections):
@@ -305,10 +322,11 @@ def plaster(command, data):
             ## mark should equal i.
             cull = _cull(command, mark)
             name = cull[0]
-            mark = cull[1] + 1
-            i = cull[1] + 1
             if name is 'null':
                 continue
+
+            mark = i = cull[1] + 1
+
             response = push(name, data)
             try:
                 link = str(response['link'])
@@ -318,13 +336,14 @@ def plaster(command, data):
                 if args.verbose == 2:
                     print('e:', e) 
                 continue
+
             if 'http' in link: 
                 break
+
             if mark <= sections:
                 if args.verbose == 2:
                     print('####')
         except Exception as e:
-            response = 'null'
             mark = mark + 1
             i = i + 1
             if args.verbose:
@@ -332,7 +351,11 @@ def plaster(command, data):
             if args.verbose == 2:
                 print('e:', e)
             continue
-    return response
+
+    try:
+        return response
+    except NameError:
+        return 'null'
 
 #
 # main
@@ -344,44 +367,45 @@ def __main__():
     content = _inlet()
     content_type = _sniff(content)
     command = _command(content_type)
+
     try:
         ## Command is a dictionary.
         response = plaster(command, content)
-        if response is 'null':
+        if response == 'null':
             if args.verbose:
                 print('done')
             exit(1)
-        link = 'null'
+
         link = str(response['link'])
         try:
-            if link != 'null' and 'http' in link:
-                if args.verbose == 2:
+            if 'http' in link:
+                if 2 == args.verbose:
                     print('INFO: main       [PASS]')
-                print(str(link).rstrip())
+                print(link.rstrip())
         except:
             if args.verbose:
                print('ERROR: main      [FAIL]')
             if not args.verbose:
                print('to debug, try plaster -v')
+
         ## Optional clipboard feature. Requires xclip.
         if args.xclip:
-            if import_pyperclip == False:
+            if not pyperclip:
                 exit('e: missing python-pyperclip')
-            if import_pyperclip == True:
-                pyperclip.copy(link)
+
+            pyperclip.copy(link)
     except Exception as e:
-        if args.verbose == 2:
+        if 2 == args.verbose:
             print('ERROR: main:', e)
         raise
 		
 def __test__(): 
     print('debug mode [ON]')
-    ###
+
     try:
         '''run test here'''
         name = 'DEFAULT'
-        p = config['DEFAULT']['time']
-        print(p)
+        print(config['DEFAULT']['time'])
     except Exception as e:
         raise
         print('ERROR: test:', e)
