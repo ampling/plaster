@@ -14,7 +14,7 @@ Plaster is an adaptable command-line paste-bin client.
 import argparse
 import configparser
 from sys import stdin
-from os import path, isatty, stat
+from os import path, isatty, stat, makedirs
 from importlib.machinery import SourceFileLoader
 
 try:
@@ -37,6 +37,9 @@ version = '0.0.9'
 config_dir = path.join(path.expanduser('~'), '.config', 'plaster')
 config_file = path.join(config_dir, 'config')
 prefix = path.join(config_dir, 'plugins')
+
+makedirs(prefix, mode=0o755, exist_ok=True)
+open(config_file, 'a').close() # make sure config file exists
 
 #
 # options
