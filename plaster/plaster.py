@@ -97,7 +97,7 @@ def _config():
 
 def _inlet():
     '''Reads all, returns content in bytes.'''
-    content = None
+    content_path = None
 
     try:
         if args.content:
