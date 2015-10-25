@@ -1,0 +1,4 @@
+build/
+dist/
+plaster.egg-info/
+*__pycache__*
