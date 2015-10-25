@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 #
 # Copyright (c) [2015-08-06], ISC license, [Ampling <plaster@ampling.com>]
-# Copyright (c) 2015 David McMackins II
 #
 '''
  ____  __      __    ___  ____  ____  ____ 
@@ -31,7 +30,7 @@ except Exception as e:
     pyperclip = None
     print('e:', e)
 
-version = '0.0.9'
+version = '0.0.10'
 
 config_dir = path.join(path.expanduser('~'), '.config', 'plaster')
 config_file = path.join(config_dir, 'config')
@@ -79,11 +78,11 @@ def _config():
         config = configparser.ConfigParser()
         config.read(config_file)
         ## Measures file size for helpful message.
-        if 0 == stat(config_file).st_size:
+        if stat(config_file).st_size == 0:
             print('e: configuration appears empty')
             print('try adding a section')
             exit(config_file)
-        if 0 == len(config.sections()):
+        if len(config.sections()) == 0:
             print('e: configuration needs sections')
             print('try uncommenting a section')
             exit(config_file)
@@ -136,17 +135,21 @@ def _sniff(content):
     media_types = ['image', 'text']
     if args.manual:
         if args.manual not in media_types:
-            print('list of media types:')
-            print(media_types)
-            exit(1)
-
+            print('listing media types...')
+            exit(media_types)
+      
         content_type = args.manual
         return content_type
     else:
         if not magic:
-            exit('please install python-magic or use manual mode -m')
+            exit('please install python-magic or plaster --manual <media_type>')
 
-        content_type = (magic.from_buffer(content, mime=True)).decode('utf-8')
+        try:
+            content_type = (magic.from_buffer(content, mime=True)).decode('utf-8')
+        except Exception as e:
+            print('e:', e)
+            print(':: possible version or name conflict')
+            exit(':: pip install python-magic or plaster --manual <media_type>')
 
     return content_type
 
@@ -156,7 +159,7 @@ def _command(content_type):
     Returns a dictionary.
     '''
     try:
-        if 2 == args.verbose:
+        if args.verbose == 2:
             print(content_type)
         if 'text' in content_type:
             command = {'text': 'yes'}
@@ -174,7 +177,7 @@ def _command(content_type):
             command = {'image': 'yes'}
         ## Add other content types here.
     except Exception as e:
-        if 2 == args.verbose:
+        if args.verbose == 2:
             print('e:', e)
 
     try:
@@ -195,7 +198,7 @@ def _command(content_type):
 
         return command
     except Exception as e:
-        if 2 == args.verbose:
+        if args.verbose == 2:
             print('ERROR: command:', e)
 
 def _cull(command, mark): 
@@ -232,7 +235,7 @@ def _cull(command, mark):
                 if args.verbose:
                     print('INFO: cull       [FAIL]')
 
-                if sections - 1 == mark:
+                if mark == sections - 1:
                     if args.verbose:
                         print('failed to find a plugin match')
                     exit(1)
@@ -270,7 +273,7 @@ def push(name, data):
             login = (config[name]['username'], config[name]['password'])
         else:
             login = (None, None)
-
+        
         time = args.time
         if args.time is None:
             try:
@@ -292,7 +295,7 @@ def push(name, data):
             if response['reason']:
                 if args.verbose:
                     print('ERROR: plugin    [FAIL]')
-                if 2 == args.verbose:
+                if args.verbose == 2:
                     print('e:', response['reason'])
         else:
             if args.verbose == 2:
@@ -379,7 +382,7 @@ def __main__():
         link = str(response['link'])
         try:
             if 'http' in link:
-                if 2 == args.verbose:
+                if args.verbose == 2:
                     print('INFO: main       [PASS]')
                 print(link.rstrip())
         except:
@@ -395,7 +398,7 @@ def __main__():
 
             pyperclip.copy(link)
     except Exception as e:
-        if 2 == args.verbose:
+        if args.verbose == 2:
             print('ERROR: main:', e)
         raise
 		
@@ -403,9 +406,8 @@ def __test__():
     print('debug mode [ON]')
 
     try:
-        '''run test here'''
-        name = 'DEFAULT'
-        print(config['DEFAULT']['time'])
+        '''This is a test.'''
+
     except Exception as e:
         raise
         print('ERROR: test:', e)
