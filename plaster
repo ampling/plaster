@@ -1,0 +1,12 @@
+#! /usr/bin/env python3
+##
+##  plaster - adaptable command-line pastebin client
+##  Copyright (C) 2015 David McMackins II
+##
+##  Released under the ISC license: see LICENSE.md (which should have been
+##  distributed with this software) for more details.
+##
+
+from plasterlib import __main__
+
+__main__()
