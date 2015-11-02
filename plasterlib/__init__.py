@@ -36,7 +36,11 @@ config_dir = path.join(path.expanduser('~'), '.config', 'plaster')
 config_file = path.join(config_dir, 'config')
 prefix = path.join(config_dir, 'plugins')
 
-makedirs(prefix, mode=0o755, exist_ok=True)
+try:
+    makedirs(prefix, mode=0o755, exist_ok=True)
+except FileExistsError:
+    pass # temp fix for possible Python 3.5 os module bug
+
 open(config_file, 'a').close() # make sure config file exists
 
 #
