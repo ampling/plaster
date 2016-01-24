@@ -41,7 +41,6 @@ try:
 except FileExistsError:
     pass # temp fix for possible Python 3.5 os module bug
 
-open(config_file, 'a').close() # make sure config file exists
 
 #
 # options
@@ -68,6 +67,11 @@ parser.add_argument('-t', '--time', nargs='?', default=0, type=int,
 parser.add_argument('-m', '--manual', default=0,
         help="set media type or list and exit")
 args = parser.parse_args()
+
+try:
+    open(config_file, 'a').close() # make sure config file exists
+except Exception as e:
+    print('e:' , e)
 
 #
 # BEGIN helper functions 
