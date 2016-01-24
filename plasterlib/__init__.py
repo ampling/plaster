@@ -32,9 +32,8 @@ except Exception as e:
 
 version = '0.1.0'
 
-config_dir = path.join(path.expanduser('~'), '.config', 'plaster')
-config_file = path.join(config_dir, 'config')
-prefix = path.join(config_dir, 'plugins')
+config_file = 'plasterlib/config'
+prefix = 'plasterlib/plugins'
 
 try:
     makedirs(prefix, mode=0o755, exist_ok=True)
@@ -68,10 +67,6 @@ parser.add_argument('-m', '--manual', default=0,
         help="set media type or list and exit")
 args = parser.parse_args()
 
-try:
-    open(config_file, 'a').close() # make sure config file exists
-except Exception as e:
-    print('e:' , e)
 
 #
 # BEGIN helper functions 
@@ -83,6 +78,7 @@ def _config():
     Configuration location should be adjustable.
     '''
     try:
+        open(config_file, 'a').close() # make sure config file exists
         config = configparser.ConfigParser()
         config.read(config_file)
         ## Measures file size for helpful message.
