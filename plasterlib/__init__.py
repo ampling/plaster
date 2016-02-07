@@ -32,8 +32,9 @@ except Exception as e:
 
 version = '0.1.0'
 
-config_file = 'plasterlib/config'
-prefix = 'plasterlib/plugins'
+config_dir = path.join(path.expanduser('~'), '.config', 'plaster')
+config_file = path.join(config_dir, 'config')
+prefix = path.join(config_dir, 'plugins')
 
 try:
     makedirs(prefix, mode=0o755, exist_ok=True)
