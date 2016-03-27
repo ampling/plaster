@@ -22,6 +22,7 @@ def tell_form():
 
 def tell_post(request_chain):
     '''alt plugin for ptpb'''
+    
     try:
         url = request_chain['url']
         data = request_chain['data'] 
@@ -33,6 +34,8 @@ def tell_post(request_chain):
         r = requests.post(url, files=payload)
         info = r.content.decode("utf-8").rpartition('https://')
         link = ''.join([info[-2], info[-1].splitlines()[0]])
+        if 'image' in request_chain['meta']['content_type'] and request_chain['meta']['extension'] is not None:
+            link = link + '.' + request_chain['meta']['extension']
         response = {
                 'link': link,
                 'code': r.status_code, 

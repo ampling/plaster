@@ -69,6 +69,7 @@ parser.add_argument('-m', '--manual', default=0,
 args = parser.parse_args()
 
 
+
 #
 # BEGIN helper functions 
 #
@@ -79,7 +80,6 @@ def _config():
     Configuration location should be adjustable.
     '''
     try:
-        open(config_file, 'a').close() # make sure config file exists
         config = configparser.ConfigParser()
         config.read(config_file)
         ## Measures file size for helpful message.
@@ -127,7 +127,6 @@ def _inlet():
         if content_path is not None:
             with open(content_path, 'rb') as i:
                 content = i.read()
-
         return content
     except KeyboardInterrupt:
         print()
@@ -137,6 +136,11 @@ def _inlet():
         exit(1)
 
 def _sniff(content):
+    '''
+    A dictionary of meta data will trickle down to plugins to help browsers. 
+    For example, allowing plugins to append png to https://ptpb.pw/LGFC 
+    yields https://ptpb.pw/LGFC.png
+    '''
     media_types = ['image', 'text']
     if args.manual:
         if args.manual not in media_types:
@@ -144,40 +148,43 @@ def _sniff(content):
             exit(media_types)
       
         content_type = args.manual
-        return content_type
+        meta = {'content_type': content_type, 'extension': None}
+        
     else:
         if not magic:
             exit('please install python-magic or plaster --manual <media_type>')
 
         try:
             content_type = (magic.from_buffer(content, mime=True)).decode('utf-8')
+            ext_part = content_type.rpartition('/')
+            meta = {'content_type': content_type, 'extension': ext_part[2]}
         except Exception as e:
             print('e:', e)
             print(':: possible version or name conflict')
             exit(':: pip install python-magic or plaster --manual <media_type>')
 
-    return content_type
+    return meta
 
-def _command(content_type):
+def _command(meta):
     '''
     Composes a dictionary to match specified parameters.
     Returns a dictionary.
     '''
     try:
         if args.verbose == 2:
-            print(content_type)
-        if 'text' in content_type:
+            print(meta['content_type'])
+        if 'text' in meta['content_type']:
             command = {'text': 'yes'}
-        elif 'image' in content_type:
+        elif 'image' in meta['content_type']:
             command = {'image': 'yes'}
-        elif 'audio' in content_type:
+        elif 'audio' in meta['content_type']:
             command = {'audio': 'yes'}
-        elif 'video' in content_type:
+        elif 'video' in meta['content_type']:
             command = {'video': 'yes'}
         else:
             if not args.force:
                 if args.verbose != 2:
-                    print(content_type)
+                    print(meta['content_type'])
                 exit('e: untested media types requre -f')
             command = {'image': 'yes'}
         ## Add other content types here.
@@ -266,11 +273,11 @@ def _load(name):
         if args.verbose == 2:
             print('e:', e)
 
-def push(name, data):
+def push(name, data, meta):
     '''
-    This is the fuction which intereacts with plugins.
-    Accepts name of paste-bin and data in bytes.
-    Example: push("clbin", "b'Hello, World!'")
+    This fuction intereacts with plugins. Accepts name of paste-bin,
+    data in bytes, and meta as a dictionary.
+    Example: push("clbin", "b'Hello, World!', {}")
     Returns a dictionary with keys link, code and reason. 
     '''
     try:
@@ -286,13 +293,14 @@ def push(name, data):
             except Exception as e:
                 print('e:', e)
                 exit(1)
-
+        
         ## url and data are required, the rest are optional
         request_chain = {
             'url': config[name]['url'], 
             'data': data, 
             'time': time, 
-            'login': login
+            'login': login,
+            'meta' : meta
         }
 
         response = _load(name).tell_post(request_chain)
@@ -316,7 +324,7 @@ def push(name, data):
         except NameError:
             return 'null'
 
-def plaster(command, data):
+def plaster(command, data, meta):
     '''
     Accepts command as a dictionary and data in bytes.
     example: plaster({'txt': 'yes'}, "b'Hello, World!'") 
@@ -335,7 +343,7 @@ def plaster(command, data):
 
             mark = i = cull[1] + 1
 
-            response = push(name, data)
+            response = push(name, data, meta)
             try:
                 link = str(response['link'])
             except Exception as e:
@@ -369,16 +377,17 @@ def plaster(command, data):
 # main
 #
 
+open(config_file, 'a').close() # make sure config file exists
 config = _config()
 
 def __main__():
     content = _inlet()
-    content_type = _sniff(content)
-    command = _command(content_type)
-
+    meta = _sniff(content)
+    command = _command(meta['content_type'])
+    
     try:
-        ## Command is a dictionary.
-        response = plaster(command, content)
+        ## Command and meta are dictionaries.
+        response = plaster(command, content, meta)
         if response == 'null':
             if args.verbose:
                 print('done')
@@ -386,6 +395,8 @@ def __main__():
 
         link = str(response['link'])
         try:
+            '''final result'''
+
             if 'http' in link:
                 if args.verbose == 2:
                     print('INFO: main       [PASS]')
