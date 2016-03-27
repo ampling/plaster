@@ -30,7 +30,7 @@ except Exception as e:
     pyperclip = None
     print('e:', e)
 
-version = '0.1.0'
+version = '0.1.1'
 
 config_dir = path.join(path.expanduser('~'), '.config', 'plaster')
 config_file = path.join(config_dir, 'config')
